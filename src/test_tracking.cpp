@@ -1,4 +1,6 @@
+#include <iostream>
 #include <fstream>
+#include <string>
 #include <thread>
 #include <unistd.h>
 
@@ -17,7 +19,7 @@ using namespace feature_tracker;
 // TrackBase* trackFEATS = nullptr;
 
 
-string data_folder = "/home/ld/project/dataset/PV_1";
+string data_folder = "‎⁨/Users/zhangjingwen/Downloads/liudong/pro/dataset/PV_1";
 string param_folder = "../config/test.yaml";
 
 void load_params(FeatureTrackerOptions &params)
@@ -115,7 +117,7 @@ void load_params(FeatureTrackerOptions &params)
 
 void feed_measurement_imu()
 {
-    string imuFile = data_folder + "/imu.txt";
+    string imuFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/PV_1/imu.txt";
 
     std::ifstream f;
     f.open(imuFile.c_str());
@@ -150,8 +152,8 @@ void feed_measurement_imu()
 
 void feed_measurement_stereo()
 {
-    string strFile = data_folder + "/forw/timestamp.txt";
-    string filepath = data_folder + "/forw/";
+    string strFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/PV_1/forw/timestamp.txt";
+    string filepath = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/PV_1/forw/";
 
     // Retrieve paths to images
     vector<string> vstr_left_image;
@@ -192,12 +194,12 @@ void feed_measurement_stereo()
             // continue;
         }
 
-        im_left = cv::imread(filepath + vstr_left_image[ni], CV_LOAD_IMAGE_GRAYSCALE);
-        im_right = cv::imread(filepath + vstr_right_image[ni], CV_LOAD_IMAGE_GRAYSCALE);
+        im_left = cv::imread(filepath + vstr_left_image[ni]);
+        im_right = cv::imread(filepath + vstr_right_image[ni]);
 
-        // imshow("im_left", im_left);
-        // imshow("im_right", im_right);
-        // cv::waitKey(0);
+        imshow("im_left", im_left);
+        imshow("im_right", im_right);
+        cv::waitKey(0);
 
         if(im_left.empty() || im_right.empty())
         {
@@ -217,6 +219,9 @@ int main()
     // 加载params
     FeatureTrackerOptions params;
     load_params(params);
+    // 打印参数信息
+    params.print_trackers();
+    params.print_state();
 
     // trackFEATS = new TrackKLT(params.num_pts,state->_options.max_aruco_features,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
     // trackFEATS->set_calibration(params.camera_intrinsics, params.camera_fisheye);
