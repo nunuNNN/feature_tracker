@@ -197,9 +197,9 @@ void feed_measurement_stereo()
         im_left = cv::imread(filepath + vstr_left_image[ni]);
         im_right = cv::imread(filepath + vstr_right_image[ni]);
 
-        imshow("im_left", im_left);
-        imshow("im_right", im_right);
-        cv::waitKey(0);
+        // imshow("im_left", im_left);
+        // imshow("im_right", im_right);
+        // cv::waitKey(0);
 
         if(im_left.empty() || im_right.empty())
         {
