@@ -4,7 +4,10 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
+  "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp" "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o"
   "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp" "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.o"
+  "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp" "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o"
+  "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp" "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "Clang")
 

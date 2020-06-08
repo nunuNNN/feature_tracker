@@ -93,24 +93,17 @@ namespace feature_tracker {
          * This will also update the feature database with corrected normalized values.
          * Normally this would only be needed if we are optimizing our camera parameters, and thus should re-normalize.
          * @param camera_calib Calibration parameters for all cameras [fx,fy,cx,cy,d1,d2,d3,d4]
-         * @param camera_fisheye Map of camera_id => bool if we should do radtan or fisheye distortion model
          * @param correct_active If we should re-undistort active features in our database
          */
-        void set_calibration(std::map<size_t,Eigen::VectorXd> camera_calib,
-                             std::map<size_t, bool> camera_fisheye, bool correct_active=false) {
-
-            // Assert vectors are equal
-            assert(camera_calib.size()==camera_fisheye.size());
+        void set_calibration(std::map<size_t,Eigen::VectorXd> camera_calib, bool correct_active=false) {
 
             // Initialize our mutex and camera intrinsic values if we are just starting up
             // The number of cameras should not change over time, thus we just need to check if our initial data is empty
-            if(mtx_feeds.empty() || camera_k_OPENCV.empty() || camera_k_OPENCV.empty() || this->camera_fisheye.empty()) {
+            if(mtx_feeds.empty() || camera_k_OPENCV.empty() || camera_k_OPENCV.empty()) {
                 // Create our mutex array based on the number of cameras we have
                 // See https://stackoverflow.com/a/24170141/7718197
                 std::vector<std::mutex> list(camera_calib.size());
                 mtx_feeds.swap(list);
-                // Overwrite our fisheye calibration
-                this->camera_fisheye = camera_fisheye;
                 // Convert values to the OpenCV format
                 for (auto const &cam : camera_calib) {
                     // Assert we are of size eight
@@ -140,14 +133,11 @@ namespace feature_tracker {
 
             // assert that the number of cameras can not change
             assert(camera_k_OPENCV.size()==camera_calib.size());
-            assert(camera_k_OPENCV.size()==camera_fisheye.size());
 
             // Convert values to the OpenCV format
             for (auto const &cam : camera_calib) {
                 // Lock this image feed
                 std::unique_lock<std::mutex> lck(mtx_feeds.at(cam.first));
-                // Fisheye value
-                this->camera_fisheye.at(cam.first) = camera_fisheye.at(cam.first);
                 // Assert we are of size eight
                 assert(cam.second.rows()==8);
                 // Camera matrix
@@ -289,26 +279,26 @@ namespace feature_tracker {
          */
         void feed_imu(double timestamp, Eigen::Vector3d &am, Eigen::Vector3d &wm) {
             
-            // Create our imu data object
-            IMUDATA data;
-            data.timestamp = timestamp;
-            data.wm = wm;
-            data.am = am;
+            // // Create our imu data object
+            // IMUDATA data;
+            // data.timestamp = timestamp;
+            // data.wm = wm;
+            // data.am = am;
 
-            // Append it to our vector
-            imu_data.emplace_back(data);
+            // // Append it to our vector
+            // imu_data.emplace_back(data);
 
-            // // Loop through and delete imu messages that are older then 20 seconds
-            // // TODO: we should probably have more elegant logic then this
-            // // TODO: but this prevents unbounded memory growth and slow prop with high freq imu
-            // auto it0 = imu_data.begin();
-            // while(it0 != imu_data.end()) {
-            //     if(timestamp-(*it0).timestamp > 20) {
-            //         it0 = imu_data.erase(it0);
-            //     } else {
-            //         it0++;
-            //     }
-            // }
+            // // // Loop through and delete imu messages that are older then 20 seconds
+            // // // TODO: we should probably have more elegant logic then this
+            // // // TODO: but this prevents unbounded memory growth and slow prop with high freq imu
+            // // auto it0 = imu_data.begin();
+            // // while(it0 != imu_data.end()) {
+            // //     if(timestamp-(*it0).timestamp > 20) {
+            // //         it0 = imu_data.erase(it0);
+            // //     } else {
+            // //         it0++;
+            // //     }
+            // // }
         }
 
     protected:
@@ -363,7 +353,7 @@ namespace feature_tracker {
         std::atomic<size_t> currid;
 
         /// IMU buffer for rotation between two frames
-        std::vector<IMUDATA> imu_data;
+        // std::vector<IMUDATA> imu_data;
 
 
     };

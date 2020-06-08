@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef OV_CORE_GRIDER_FAST_H
-#define OV_CORE_GRIDER_FAST_H
+#ifndef GRIDER_FAST_H
+#define GRIDER_FAST_H
 
 
 #include <vector>
@@ -32,7 +32,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 
-namespace ov_core {
+namespace feature_tracker {
 
     /**
      * @brief Extracts FAST features in a grid pattern.
@@ -137,4 +137,4 @@ namespace ov_core {
 }
 
 
-#endif /* OV_CORE_GRIDER_FAST_H */
+#endif /* GRIDER_FAST_H */

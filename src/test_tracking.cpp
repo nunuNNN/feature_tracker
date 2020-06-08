@@ -8,6 +8,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "FeatureTrackerOptions.h"
+#include "track/TrackKLT.h"
 
 using namespace std;
 using namespace Eigen;
@@ -16,7 +17,7 @@ using namespace cv;
 using namespace feature_tracker;
 
 /// Our sparse feature tracker
-// TrackBase* trackFEATS = nullptr;
+TrackBase* trackFEATS = nullptr;
 
 
 string data_folder = "‎⁨/Users/zhangjingwen/Downloads/liudong/pro/dataset/PV_1";
@@ -144,7 +145,7 @@ void feed_measurement_imu()
             ss >> dStampUSec >> vAcc.x() >> vAcc.y() >> vAcc.z() >>
                 vGyr.x() >> vGyr.y() >> vGyr.z();
 
-            // trackFEATS->feed_imu(dStampUSec * 1e3, vAcc, vGyr);
+            trackFEATS->feed_imu(dStampUSec * 1e3, vAcc, vGyr);
         }
     }
 }
@@ -207,7 +208,7 @@ void feed_measurement_stereo()
             continue;
         }
 
-        // trackFEATS->feed_stereo((uint64_t)vTimeStamp[ni], im_left, im_right, 0, 1);
+        trackFEATS->feed_stereo((uint64_t)vTimeStamp[ni], im_left, im_right, 0, 1);
 
         usleep(20000);
     }
@@ -223,8 +224,8 @@ int main()
     params.print_trackers();
     params.print_state();
 
-    // trackFEATS = new TrackKLT(params.num_pts,state->_options.max_aruco_features,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
-    // trackFEATS->set_calibration(params.camera_intrinsics, params.camera_fisheye);
+    trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
+    trackFEATS->set_calibration(params.camera_intrinsics);
 
 
     thread thd_pub_imu(feed_measurement_imu);

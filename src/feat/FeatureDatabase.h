@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef OV_CORE_FEATURE_DATABASE_H
-#define OV_CORE_FEATURE_DATABASE_H
+#ifndef FEATURE_DATABASE_H
+#define FEATURE_DATABASE_H
 
 
 #include <vector>
@@ -29,7 +29,7 @@
 #include "Feature.h"
 
 
-namespace ov_core {
+namespace feature_tracker {
 
     /**
      * @brief Database containing features we are currently tracking.
@@ -332,4 +332,4 @@ namespace ov_core {
 
 }
 
-#endif /* OV_CORE_FEATURE_DATABASE_H */
+#endif /* FEATURE_DATABASE_H */

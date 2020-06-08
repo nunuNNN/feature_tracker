@@ -12,9 +12,11 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMakeModules/"
 
 FIND_PACKAGE(OpenCV 4 REQUIRED)
 FIND_PACKAGE(Eigen REQUIRED)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS system filesystem thread date_time)
 
 message("Eigen is found: ${Eigen_INCLUDE_DIRS}")
 message("OpenCV is found: ${OpenCV_INCLUDE_DIRS}")
+message(STATUS "BOOST VERSION: " ${Boost_VERSION})
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/../src
@@ -30,5 +32,11 @@ LIST(APPEND thirdparty_libraries
 )
 message("OpenCV_LIBS : ${OpenCV_LIBS}")
 
-add_executable( test_tracking ${PROJECT_SOURCE_DIR}/../src/test_tracking.cpp )
+LIST(APPEND sourcefiles
+    ${PROJECT_SOURCE_DIR}/../src/feat/Feature.cpp 
+    ${PROJECT_SOURCE_DIR}/../src/track/TrackBase.cpp 
+    ${PROJECT_SOURCE_DIR}/../src/track/TrackKLT.cpp 
+    )
+
+add_executable( test_tracking ${PROJECT_SOURCE_DIR}/../src/test_tracking.cpp ${sourcefiles})
 target_link_libraries( test_tracking ${thirdparty_libraries} )

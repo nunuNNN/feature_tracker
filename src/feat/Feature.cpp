@@ -21,7 +21,7 @@
 #include "Feature.h"
 
 
-using namespace ov_core;
+using namespace feature_tracker;
 
 
 

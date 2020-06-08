@@ -6,6 +6,28 @@
 
 #IncludeRegexTransform: 
 
+../../src/feat/Feature.h
+vector
+-
+iostream
+-
+unordered_map
+-
+Eigen/Eigen
+-
+
+../../src/feat/FeatureDatabase.h
+vector
+-
+mutex
+-
+Eigen/Eigen
+-
+Feature.h
+../../src/feat/Feature.h
+
+../../src/utils/colors.h
+
 /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/FeatureTrackerOptions.h
 string
 -
@@ -35,6 +57,70 @@ opencv2/highgui/highgui.hpp
 -
 FeatureTrackerOptions.h
 /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/FeatureTrackerOptions.h
+track/TrackKLT.h
+/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.h
+
+/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/Grider_DOG.h
+vector
+-
+iostream
+-
+Eigen/Eigen
+-
+opencv/cv.hpp
+-
+opencv2/core/core.hpp
+-
+opencv2/highgui/highgui.hpp
+-
+
+/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/Grider_FAST.h
+vector
+-
+iostream
+-
+Eigen/Eigen
+-
+opencv/cv.hpp
+-
+opencv2/core/core.hpp
+-
+opencv2/highgui/highgui.hpp
+-
+
+/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.h
+iostream
+-
+thread
+-
+mutex
+-
+atomic
+-
+unordered_map
+-
+Eigen/StdVector
+-
+boost/thread.hpp
+-
+opencv/cv.hpp
+-
+opencv2/core/core.hpp
+-
+opencv2/highgui/highgui.hpp
+-
+Grider_FAST.h
+/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/Grider_FAST.h
+Grider_DOG.h
+/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/Grider_DOG.h
+feat/FeatureDatabase.h
+/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/feat/FeatureDatabase.h
+utils/colors.h
+/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/utils/colors.h
+
+/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.h
+TrackBase.h
+/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.h
 
 /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/utils/quat_ops.h
 string
@@ -846,6 +932,14 @@ src/SparseQR/SparseQR.h
 src/Core/util/ReenableStupidWarnings.h
 /usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/src/Core/util/ReenableStupidWarnings.h
 
+/usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/StdVector
+Core
+/usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/Core
+vector
+-
+src/StlSupport/StdVector.h
+/usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/src/StlSupport/StdVector.h
+
 /usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/src/Cholesky/LDLT.h
 
 /usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/src/Cholesky/LLT.h
@@ -1409,6 +1503,12 @@ Eigen_Colamd.h
 /usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/src/SparseLU/SparseLU_relax_snode.h
 
 /usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/src/SparseQR/SparseQR.h
+
+/usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/src/StlSupport/StdVector.h
+details.h
+/usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/src/StlSupport/details.h
+
+/usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/src/StlSupport/details.h
 
 /usr/local/Cellar/eigen/3.3.7/include/eigen3/Eigen/src/misc/Image.h
 

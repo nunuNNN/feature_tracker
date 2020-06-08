@@ -123,6 +123,33 @@ test_tracking/fast:
 	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/build
 .PHONY : test_tracking/fast
 
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.o: Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o
+
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.o
+
+# target to build an object file
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o:
+	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o
+
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.i: Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.i
+
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.i
+
+# target to preprocess a source file
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.i:
+	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.i
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.i
+
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.s: Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.s
+
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.s
+
+# target to generate assembly for a file
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.s:
+	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.s
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.s
+
 Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.o: Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.o
 
 .PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.o
@@ -150,6 +177,60 @@ Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.s
 	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.s
 .PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.s
 
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.o: Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o
+
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.o
+
+# target to build an object file
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o:
+	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o
+
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.i: Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.i
+
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.i
+
+# target to preprocess a source file
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.i:
+	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.i
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.i
+
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.s: Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.s
+
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.s
+
+# target to generate assembly for a file
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.s:
+	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.s
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.s
+
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.o: Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o
+
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.o
+
+# target to build an object file
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o:
+	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o
+
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.i: Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.i
+
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.i
+
+# target to preprocess a source file
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.i:
+	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.i
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.i
+
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.s: Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.s
+
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.s
+
+# target to generate assembly for a file
+Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.s:
+	$(MAKE) -f CMakeFiles/test_tracking.dir/build.make CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.s
+.PHONY : Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -159,9 +240,18 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... test_tracking"
+	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.o"
+	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.i"
+	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.s"
 	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.o"
 	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.i"
 	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.s"
+	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.o"
+	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.i"
+	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.s"
+	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.o"
+	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.i"
+	@echo "... Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.s"
 .PHONY : help
 
 

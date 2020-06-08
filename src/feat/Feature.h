@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef OV_CORE_FEATURE_H
-#define OV_CORE_FEATURE_H
+#ifndef FEATURE_H
+#define FEATURE_H
 
 
 #include <vector>
@@ -27,7 +27,7 @@
 #include <unordered_map>
 #include <Eigen/Eigen>
 
-namespace ov_core {
+namespace feature_tracker {
 
     /**
      * @brief Sparse feature class used to collect measurements
@@ -92,4 +92,4 @@ namespace ov_core {
 }
 
 
-#endif /* OV_CORE_FEATURE_H */
+#endif /* FEATURE_H */

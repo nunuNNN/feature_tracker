@@ -70,14 +70,59 @@ CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tr
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.s"
 	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp -o CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.s
 
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o: CMakeFiles/test_tracking.dir/flags.make
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o: /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o"
+	/Library/Developer/CommandLineTools/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o -c /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp
+
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.i"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp > CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.i
+
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.s"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp -o CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.s
+
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o: CMakeFiles/test_tracking.dir/flags.make
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o: /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o"
+	/Library/Developer/CommandLineTools/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o -c /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp
+
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.i"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp > CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.i
+
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.s"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp -o CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.s
+
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o: CMakeFiles/test_tracking.dir/flags.make
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o: /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o"
+	/Library/Developer/CommandLineTools/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o -c /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp
+
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.i"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp > CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.i
+
+CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.s"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp -o CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.s
+
 # Object files for target test_tracking
 test_tracking_OBJECTS = \
-"CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.o"
+"CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.o" \
+"CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o" \
+"CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o" \
+"CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o"
 
 # External object files for target test_tracking
 test_tracking_EXTERNAL_OBJECTS =
 
 ../bin/test_tracking: CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.o
+../bin/test_tracking: CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o
+../bin/test_tracking: CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o
+../bin/test_tracking: CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o
 ../bin/test_tracking: CMakeFiles/test_tracking.dir/build.make
 ../bin/test_tracking: /usr/local/lib/libopencv_dnn.4.3.0.dylib
 ../bin/test_tracking: /usr/local/lib/libopencv_gapi.4.3.0.dylib
@@ -95,7 +140,7 @@ test_tracking_EXTERNAL_OBJECTS =
 ../bin/test_tracking: /usr/local/lib/libopencv_imgproc.4.3.0.dylib
 ../bin/test_tracking: /usr/local/lib/libopencv_core.4.3.0.dylib
 ../bin/test_tracking: CMakeFiles/test_tracking.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable ../bin/test_tracking"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable ../bin/test_tracking"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_tracking.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

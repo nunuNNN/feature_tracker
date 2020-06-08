@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef OV_CORE_GRIDER_DOG_H
-#define OV_CORE_GRIDER_DOG_H
+#ifndef GRIDER_DOG_H
+#define GRIDER_DOG_H
 
 
 #include <vector>
@@ -32,7 +32,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 
-namespace ov_core {
+namespace feature_tracker {
 
     /**
      * @brief Does Difference of Gaussian (DoG) in a grid pattern.
@@ -184,4 +184,4 @@ namespace ov_core {
 
 }
 
-#endif /* OV_CORE_GRIDER_DOG_H */
+#endif /* GRIDER_DOG_H */
