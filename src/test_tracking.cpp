@@ -37,9 +37,6 @@ void load_params(FeatureTrackerOptions &params)
     fsParams["LEFT.K"] >> K_l;
     fsParams["RIGHT.K"] >> K_r;
 
-    fsParams["LEFT.P"] >> P_l;
-    fsParams["RIGHT.P"] >> P_r;
-
     fsParams["LEFT.R"] >> R_l;
     fsParams["RIGHT.R"] >> R_r;
 
@@ -51,7 +48,7 @@ void load_params(FeatureTrackerOptions &params)
     int rows_r = fsParams["RIGHT.height"];
     int cols_r = fsParams["RIGHT.width"];
 
-    if(K_l.empty() || K_r.empty() || P_l.empty() || P_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty() ||
+    if(K_l.empty() || K_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty() ||
         rows_l==0 || rows_r==0 || cols_l==0 || cols_r==0)
     {
         cout << "ERROR: Calibration parameters to rectify stereo are missing!" << endl;
@@ -66,22 +63,22 @@ void load_params(FeatureTrackerOptions &params)
         // Camera intrinsic properties
         Eigen::Matrix<double,8,1> cam_calib;
         if (i == 0) {
-            std::vector<double> matrix_k = {K_l.at<float>(0,0),K_l.at<float>(1,1),K_l.at<float>(0,2),K_l.at<float>(1,2)};
-            std::vector<double> matrix_d = {D_l.at<float>(0),D_l.at<float>(1),D_l.at<float>(2),D_l.at<float>(3)};
+            std::vector<double> matrix_k = {K_l.at<double>(0,0),K_l.at<double>(1,1),K_l.at<double>(0,2),K_l.at<double>(1,2)};
+            std::vector<double> matrix_d = {D_l.at<double>(0),D_l.at<double>(1),D_l.at<double>(2),D_l.at<double>(3)};
             cam_calib << matrix_k.at(0),matrix_k.at(1),matrix_k.at(2),matrix_k.at(3),matrix_d.at(0),matrix_d.at(1),matrix_d.at(2),matrix_d.at(3);
         }
         else if (i == 1) {
-            std::vector<double> matrix_k = {K_r.at<float>(0,0),K_r.at<float>(1,1),K_r.at<float>(0,2),K_r.at<float>(1,2)};
-            std::vector<double> matrix_d = {D_r.at<float>(0),D_r.at<float>(1),D_r.at<float>(2),D_r.at<float>(3)};
+            std::vector<double> matrix_k = {K_r.at<double>(0,0),K_r.at<double>(1,1),K_r.at<double>(0,2),K_r.at<double>(1,2)};
+            std::vector<double> matrix_d = {D_r.at<double>(0),D_r.at<double>(1),D_r.at<double>(2),D_r.at<double>(3)};
             cam_calib << matrix_k.at(0),matrix_k.at(1),matrix_k.at(2),matrix_k.at(3),matrix_d.at(0),matrix_d.at(1),matrix_d.at(2),matrix_d.at(3);
         }
 
         // Our camera extrinsics transform
         Eigen::Matrix4d T_CtoI;
         if (i == 0) {
-            std::vector<double> matrix_TCtoI = {R_l.at<float>(0,0),R_l.at<float>(0,1),R_l.at<float>(0,2),0,
-                                                R_l.at<float>(1,0),R_l.at<float>(1,1),R_l.at<float>(1,2),0,
-                                                R_l.at<float>(2,0),R_l.at<float>(2,1),R_l.at<float>(2,2),0,
+            std::vector<double> matrix_TCtoI = {R_l.at<double>(0,0),R_l.at<double>(0,1),R_l.at<double>(0,2),R_l.at<double>(0,3),
+                                                R_l.at<double>(1,0),R_l.at<double>(1,1),R_l.at<double>(1,2),R_l.at<double>(1,3),
+                                                R_l.at<double>(2,0),R_l.at<double>(2,1),R_l.at<double>(2,2),R_l.at<double>(2,3),
                                                 0,0,0,1};
             T_CtoI << matrix_TCtoI.at(0),matrix_TCtoI.at(1),matrix_TCtoI.at(2),matrix_TCtoI.at(3),
                     matrix_TCtoI.at(4),matrix_TCtoI.at(5),matrix_TCtoI.at(6),matrix_TCtoI.at(7),
@@ -90,9 +87,9 @@ void load_params(FeatureTrackerOptions &params)
         }
 
         else if (i == 1) {
-            std::vector<double> matrix_TCtoI = {R_r.at<float>(0,0),R_r.at<float>(0,1),R_r.at<float>(0,2),0,
-                                                R_r.at<float>(1,0),R_r.at<float>(1,1),R_r.at<float>(1,2),0,
-                                                R_r.at<float>(2,0),R_r.at<float>(2,1),R_r.at<float>(2,2),0,
+            std::vector<double> matrix_TCtoI = {R_r.at<double>(0,0),R_r.at<double>(0,1),R_r.at<double>(0,2),R_r.at<double>(0,3),
+                                                R_r.at<double>(1,0),R_r.at<double>(1,1),R_r.at<double>(1,2),R_r.at<double>(1,3),
+                                                R_r.at<double>(2,0),R_r.at<double>(2,1),R_r.at<double>(2,2),R_r.at<double>(2,3),
                                                 0,0,0,1};
             T_CtoI << matrix_TCtoI.at(0),matrix_TCtoI.at(1),matrix_TCtoI.at(2),matrix_TCtoI.at(3),
                     matrix_TCtoI.at(4),matrix_TCtoI.at(5),matrix_TCtoI.at(6),matrix_TCtoI.at(7),
@@ -221,17 +218,17 @@ int main()
     FeatureTrackerOptions params;
     load_params(params);
     // 打印参数信息
-    // params.print_trackers();
-    // params.print_state();
+    params.print_trackers();
+    params.print_state();
 
     trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
     trackFEATS->set_calibration(params.camera_intrinsics);
 
 
-    thread thd_pub_imu(feed_measurement_imu);
-    thd_pub_imu.join();
+    // thread thd_pub_imu(feed_measurement_imu);
+    // thd_pub_imu.join();
 
-    // feed_measurement_stereo();
+    feed_measurement_stereo();
 
     // while (true)
     {

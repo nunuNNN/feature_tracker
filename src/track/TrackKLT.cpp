@@ -34,11 +34,17 @@ void TrackKLT::feed_stereo(double timestamp, cv::Mat &img_leftin, cv::Mat &img_r
     std::unique_lock<std::mutex> lck2(mtx_feeds.at(cam_id_right));
 
     // Histogram equalize
+    // cv::Mat img_left, img_right;
+    // boost::thread t_lhe = boost::thread(cv::equalizeHist, boost::cref(img_leftin), boost::ref(img_left));
+    // boost::thread t_rhe = boost::thread(cv::equalizeHist, boost::cref(img_rightin), boost::ref(img_right));
+    // t_lhe.join();
+    // t_rhe.join();
+
+
+    // clone imgin to img
     cv::Mat img_left, img_right;
-    boost::thread t_lhe = boost::thread(cv::equalizeHist, boost::cref(img_leftin), boost::ref(img_left));
-    boost::thread t_rhe = boost::thread(cv::equalizeHist, boost::cref(img_rightin), boost::ref(img_right));
-    t_lhe.join();
-    t_rhe.join();
+    img_left = img_leftin.clone();
+    img_right = img_rightin.clone();
 
     // Extract image pyramids (boost seems to require us to put all the arguments even if there are defaults....)
     std::vector<cv::Mat> imgpyr_left, imgpyr_right;

@@ -4,18 +4,19 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp" "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/feat/Feature.cpp.o"
-  "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp" "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/test_tracking.cpp.o"
-  "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp" "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackBase.cpp.o"
-  "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp" "/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/Users/zhangjingwen/Downloads/liudong/pro/feature_tracker/src/track/TrackKLT.cpp.o"
+  "/home/ld/projects/feature_tracker/src/feat/Feature.cpp" "/home/ld/projects/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/home/ld/projects/feature_tracker/src/feat/Feature.cpp.o"
+  "/home/ld/projects/feature_tracker/src/test_tracking.cpp" "/home/ld/projects/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/home/ld/projects/feature_tracker/src/test_tracking.cpp.o"
+  "/home/ld/projects/feature_tracker/src/track/TrackBase.cpp" "/home/ld/projects/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/home/ld/projects/feature_tracker/src/track/TrackBase.cpp.o"
+  "/home/ld/projects/feature_tracker/src/track/TrackKLT.cpp" "/home/ld/projects/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir/home/ld/projects/feature_tracker/src/track/TrackKLT.cpp.o"
   )
-set(CMAKE_CXX_COMPILER_ID "Clang")
+set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "../../src"
-  "/usr/local/Cellar/eigen/3.3.7/include/eigen3"
-  "/usr/local/Cellar/opencv/4.1.2/include/opencv4"
+  "/usr/include/eigen3"
+  "/opt/ros/kinetic/include/opencv-3.3.1-dev"
+  "/opt/ros/kinetic/include/opencv-3.3.1-dev/opencv"
   )
 
 # Targets to which this target links.
