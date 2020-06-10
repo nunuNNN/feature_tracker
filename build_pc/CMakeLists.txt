@@ -10,7 +10,7 @@ SET(CMAKE_BUILD_TYPE Release) # Release, RelWithDebInfo , Debug
 SET(CMAKE_VERBOSE_MAKEFILE OFF)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMakeModules/")
 
-FIND_PACKAGE(OpenCV 4 REQUIRED)
+FIND_PACKAGE(OpenCV 3 REQUIRED)
 FIND_PACKAGE(Eigen REQUIRED)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS system filesystem thread date_time)
 
@@ -31,12 +31,12 @@ LIST(APPEND thirdparty_libraries
   ${Boost_LIBRARIES}
 )
 message("OpenCV_LIBS : ${OpenCV_LIBS}")
-
 LIST(APPEND sourcefiles
-    ${PROJECT_SOURCE_DIR}/../src/feat/Feature.cpp 
     ${PROJECT_SOURCE_DIR}/../src/track/TrackBase.cpp 
     ${PROJECT_SOURCE_DIR}/../src/track/TrackKLT.cpp 
+    ${PROJECT_SOURCE_DIR}/../src/feat/Feature.cpp 
     )
 
+
 add_executable( test_tracking ${PROJECT_SOURCE_DIR}/../src/test_tracking.cpp ${sourcefiles})
-target_link_libraries( test_tracking ${thirdparty_libraries} )
+target_link_libraries( test_tracking ${thirdparty_libraries} -lpthread )

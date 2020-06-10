@@ -104,6 +104,7 @@ namespace feature_tracker {
                 // See https://stackoverflow.com/a/24170141/7718197
                 std::vector<std::mutex> list(camera_calib.size());
                 mtx_feeds.swap(list);
+
                 // Convert values to the OpenCV format
                 for (auto const &cam : camera_calib) {
                     // Assert we are of size eight
@@ -278,27 +279,7 @@ namespace feature_tracker {
          * @param wm Gyroscope measurement
          */
         void feed_imu(double timestamp, Eigen::Vector3d &am, Eigen::Vector3d &wm) {
-            
-            // // Create our imu data object
-            // IMUDATA data;
-            // data.timestamp = timestamp;
-            // data.wm = wm;
-            // data.am = am;
-
-            // // Append it to our vector
-            // imu_data.emplace_back(data);
-
-            // // // Loop through and delete imu messages that are older then 20 seconds
-            // // // TODO: we should probably have more elegant logic then this
-            // // // TODO: but this prevents unbounded memory growth and slow prop with high freq imu
-            // // auto it0 = imu_data.begin();
-            // // while(it0 != imu_data.end()) {
-            // //     if(timestamp-(*it0).timestamp > 20) {
-            // //         it0 = imu_data.erase(it0);
-            // //     } else {
-            // //         it0++;
-            // //     }
-            // // }
+            ;
         }
 
     protected:
@@ -351,9 +332,6 @@ namespace feature_tracker {
 
         /// Master ID for this tracker (atomic to allow for multi-threading)
         std::atomic<size_t> currid;
-
-        /// IMU buffer for rotation between two frames
-        // std::vector<IMUDATA> imu_data;
 
 
     };

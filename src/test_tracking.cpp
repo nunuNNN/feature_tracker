@@ -20,7 +20,7 @@ using namespace feature_tracker;
 TrackBase* trackFEATS = nullptr;
 
 
-string data_folder = "‎⁨/Users/zhangjingwen/Downloads/liudong/pro/dataset/PV_1";
+string data_folder = "‎⁨/home/ld/projects/dataset/ap03/";
 string param_folder = "../config/test.yaml";
 
 void load_params(FeatureTrackerOptions &params)
@@ -118,7 +118,7 @@ void load_params(FeatureTrackerOptions &params)
 
 void feed_measurement_imu()
 {
-    string imuFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/PV_1/imu.txt";
+    string imuFile = "/home/ld/projects/dataset/ap03/slow/imu.txt";
 
     std::ifstream f;
     f.open(imuFile.c_str());
@@ -153,8 +153,8 @@ void feed_measurement_imu()
 
 void feed_measurement_stereo()
 {
-    string strFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/PV_1/forw/timestamp.txt";
-    string filepath = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/PV_1/forw/";
+    string strFile = "/home/ld/projects/dataset/ap03/slow/timestamp.txt";
+    string filepath = "/home/ld/projects/dataset/ap03/slow/";
 
     // Retrieve paths to images
     vector<string> vstr_left_image;
@@ -221,8 +221,8 @@ int main()
     FeatureTrackerOptions params;
     load_params(params);
     // 打印参数信息
-    params.print_trackers();
-    params.print_state();
+    // params.print_trackers();
+    // params.print_state();
 
     trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
     trackFEATS->set_calibration(params.camera_intrinsics);
@@ -231,7 +231,7 @@ int main()
     thread thd_pub_imu(feed_measurement_imu);
     thd_pub_imu.join();
 
-    feed_measurement_stereo();
+    // feed_measurement_stereo();
 
     // while (true)
     {
