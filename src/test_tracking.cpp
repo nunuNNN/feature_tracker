@@ -20,7 +20,7 @@ using namespace feature_tracker;
 TrackBase* trackFEATS = nullptr;
 
 
-string data_folder = "‎⁨/home/ld/projects/dataset/ap03/";
+string data_folder = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/";
 string param_folder = "../config/test.yaml";
 
 void load_params(FeatureTrackerOptions &params)
@@ -115,7 +115,7 @@ void load_params(FeatureTrackerOptions &params)
 
 void feed_measurement_imu()
 {
-    string imuFile = "/home/ld/projects/dataset/ap03/slow/imu.txt";
+    string imuFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/imu.txt";
 
     std::ifstream f;
     f.open(imuFile.c_str());
@@ -150,8 +150,8 @@ void feed_measurement_imu()
 
 void feed_measurement_stereo()
 {
-    string strFile = "/home/ld/projects/dataset/ap03/slow/timestamp.txt";
-    string filepath = "/home/ld/projects/dataset/ap03/slow/";
+    string strFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/timestamp.txt";
+    string filepath = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/";
 
     // Retrieve paths to images
     vector<string> vstr_left_image;
@@ -187,17 +187,13 @@ void feed_measurement_stereo()
     cv::Mat im_right, im_left;
     for (int ni = 0; ni < nImages; ni += 1)
     {
-        if (vTimeStamp[ni] < 60e9 || vTimeStamp[ni] > 300e9)
+        if (vTimeStamp[ni] < 40e9 || vTimeStamp[ni] > 325e9)
         {
-            // continue;
+            continue;
         }
 
-        im_left = cv::imread(filepath + vstr_left_image[ni]);
-        im_right = cv::imread(filepath + vstr_right_image[ni]);
-
-        // imshow("im_left", im_left);
-        // imshow("im_right", im_right);
-        // cv::waitKey(0);
+        im_left = cv::imread(filepath + vstr_left_image[ni], 0);
+        im_right = cv::imread(filepath + vstr_right_image[ni], 0);
 
         if(im_left.empty() || im_right.empty())
         {
@@ -207,7 +203,13 @@ void feed_measurement_stereo()
 
         trackFEATS->feed_stereo((uint64_t)vTimeStamp[ni], im_left, im_right, 0, 1);
 
-        usleep(20000);
+        // Get our image of history tracks
+        cv::Mat img_history;
+        trackFEATS->display_history(img_history,255,255,0,255,255,255);
+        imshow("img_history", img_history);
+        cv::waitKey(1);
+
+        // usleep(20000);
     }
 }
 
@@ -218,8 +220,8 @@ int main()
     FeatureTrackerOptions params;
     load_params(params);
     // 打印参数信息
-    params.print_trackers();
-    params.print_state();
+    // params.print_trackers();
+    // params.print_state();
 
     trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
     trackFEATS->set_calibration(params.camera_intrinsics);
