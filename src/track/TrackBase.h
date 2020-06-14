@@ -37,6 +37,7 @@
 #include "Grider_FAST.h"
 #include "Grider_DOG.h"
 #include "feat/FeatureDatabase.h"
+#include "propagator/TrackPropagator.h"
 #include "utils/colors.h"
 
 
@@ -75,14 +76,14 @@ namespace feature_tracker {
         /**
          * @brief Public default constructor
          */
-        TrackBase() : database(new FeatureDatabase()), num_features(200), currid(0) { }
+        TrackBase() : database(new FeatureDatabase()), propagator(new TrackPropagator), num_features(200), currid(0) { }
 
         /**
          * @brief Public constructor with configuration variables
          * @param numfeats number of features we want want to track (i.e. track 200 points from frame to frame)
          * @param numaruco the max id of the arucotags, so we ensure that we start our non-auroc features above this value
          */
-        TrackBase(int numfeats, int numaruco) : database(new FeatureDatabase()), num_features(numfeats) {
+        TrackBase(int numfeats, int numaruco) : database(new FeatureDatabase()), propagator(new TrackPropagator), num_features(numfeats) {
             // Our current feature ID should be larger then the number of aruco tags we have
             currid = (size_t) numaruco + 1;
         }
@@ -279,7 +280,8 @@ namespace feature_tracker {
          * @param wm Gyroscope measurement
          */
         void feed_imu(double timestamp, Eigen::Vector3d &am, Eigen::Vector3d &wm) {
-            ;
+            // 江imu数据传递到TrackPropagator类中，imu的操作都是在该类中完成
+            propagator->push_imu(timestamp, wm, am);
         }
 
     protected:
@@ -332,6 +334,9 @@ namespace feature_tracker {
 
         /// Master ID for this tracker (atomic to allow for multi-threading)
         std::atomic<size_t> currid;
+
+        /// Propagator of our track
+        TrackPropagator *propagator;
 
 
     };

@@ -143,7 +143,7 @@ void feed_measurement_imu()
             ss >> dStampUSec >> vAcc.x() >> vAcc.y() >> vAcc.z() >>
                 vGyr.x() >> vGyr.y() >> vGyr.z();
 
-            trackFEATS->feed_imu(dStampUSec * 1e3, vAcc, vGyr);
+            trackFEATS->feed_imu(dStampUSec * 1e-6, vAcc, vGyr);
         }
     }
 }
@@ -202,7 +202,7 @@ void feed_measurement_stereo()
             continue;
         }
 
-        trackFEATS->feed_stereo((uint64_t)vTimeStamp[ni], im_left, im_right, 0, 1);
+        trackFEATS->feed_stereo((uint64_t)(vTimeStamp[ni]*1e-9), im_left, im_right, 0, 1);
 
         // Get our image of history tracks
         cv::Mat img_history;
@@ -224,13 +224,13 @@ int main()
     // params.print_trackers();
     // params.print_state();
 
-    // trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
-    trackFEATS = new TrackDescriptor(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.knn_ratio);
+    trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
+    // trackFEATS = new TrackDescriptor(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.knn_ratio);
     trackFEATS->set_calibration(params.camera_intrinsics);
 
 
-    // thread thd_pub_imu(feed_measurement_imu);
-    // thd_pub_imu.join();
+    thread thd_pub_imu(feed_measurement_imu);
+    thd_pub_imu.join();
 
     feed_measurement_stereo();
 
