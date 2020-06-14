@@ -34,6 +34,7 @@ message("OpenCV_LIBS : ${OpenCV_LIBS}")
 LIST(APPEND sourcefiles
     ${PROJECT_SOURCE_DIR}/../src/track/TrackBase.cpp 
     ${PROJECT_SOURCE_DIR}/../src/track/TrackKLT.cpp 
+    ${PROJECT_SOURCE_DIR}/../src/track/TrackDescriptor.cpp 
     ${PROJECT_SOURCE_DIR}/../src/feat/Feature.cpp 
     )
 

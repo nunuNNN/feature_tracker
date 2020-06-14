@@ -9,6 +9,7 @@
 
 #include "FeatureTrackerOptions.h"
 #include "track/TrackKLT.h"
+#include "track/TrackDescriptor.h"
 
 using namespace std;
 using namespace Eigen;
@@ -205,7 +206,7 @@ void feed_measurement_stereo()
 
         // Get our image of history tracks
         cv::Mat img_history;
-        trackFEATS->display_history(img_history,255,255,0,255,255,255);
+        trackFEATS->display_active(img_history,255,255,0,255,255,255);
         imshow("img_history", img_history);
         cv::waitKey(1);
 
@@ -223,7 +224,8 @@ int main()
     // params.print_trackers();
     // params.print_state();
 
-    trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
+    // trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
+    trackFEATS = new TrackDescriptor(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.knn_ratio);
     trackFEATS->set_calibration(params.camera_intrinsics);
 
 
