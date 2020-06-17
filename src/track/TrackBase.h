@@ -76,14 +76,14 @@ namespace feature_tracker {
         /**
          * @brief Public default constructor
          */
-        TrackBase() : database(new FeatureDatabase()), propagator(new TrackPropagator), num_features(200), currid(0) { }
+        TrackBase() : database(new FeatureDatabase()), propagator(new TrackPropagator()), num_features(200), currid(0) { }
 
         /**
          * @brief Public constructor with configuration variables
          * @param numfeats number of features we want want to track (i.e. track 200 points from frame to frame)
          * @param numaruco the max id of the arucotags, so we ensure that we start our non-auroc features above this value
          */
-        TrackBase(int numfeats, int numaruco) : database(new FeatureDatabase()), propagator(new TrackPropagator), num_features(numfeats) {
+        TrackBase(int numfeats, int numaruco) : database(new FeatureDatabase()), propagator(new TrackPropagator()), num_features(numfeats) {
             // Our current feature ID should be larger then the number of aruco tags we have
             currid = (size_t) numaruco + 1;
         }

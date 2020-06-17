@@ -74,6 +74,28 @@ namespace feature_tracker {
             // }
         }
 
+        /***
+         * @brief set_calibration
+        */
+        void set_imu_cam_calib(std::map<size_t,Eigen::Isometry3d> imu_cam_calib)
+        {
+            // Assert stereo
+            assert(cam.size()==2);
+
+            for (auto const &cam : imu_cam_calib) {
+                if (cam.first == 0)
+                {
+                    R_cam0_imu = cam.second.linear();
+                    t_cam0_imu = cam.second.translation();
+                }
+                else if (cam.first == 1)
+                {
+                    R_cam1_imu = cam.second.linear();
+                    t_cam1_imu = cam.second.translation();
+                }
+            }
+        }
+
         /**
          * @brief propagator 
         */
@@ -106,17 +128,17 @@ namespace feature_tracker {
             if (end_iter-begin_iter > 0)
                 mean_ang_vel *= 1.0f / (end_iter-begin_iter);
             
-            // // Transform the mean angular velocity from the IMU
-            // // frame to the cam0 and cam1 frames.
-            // Eigen::Vector3d cam0_mean_ang_vel = R_cam0_imu.t() * mean_ang_vel;
-            // Eigen::Vector3d cam1_mean_ang_vel = R_cam1_imu.t() * mean_ang_vel;
+            // Transform the mean angular velocity from the IMU
+            // frame to the cam0 and cam1 frames.
+            Eigen::Vector3d cam0_mean_ang_vel = R_cam0_imu.transpose() * mean_ang_vel;
+            Eigen::Vector3d cam1_mean_ang_vel = R_cam1_imu.transpose() * mean_ang_vel;
 
-            // // Compute the relative rotation.
-            // double dtime = currTime - lastTime;
+            // Compute the relative rotation.
+            double dtime = currTime - lastTime;
             // cv::Rodrigues(cam0_mean_ang_vel*dtime, cam0_R_p_c);
             // cv::Rodrigues(cam1_mean_ang_vel*dtime, cam1_R_p_c);
-            // cam0_R_p_c = cam0_R_p_c.t();
-            // cam1_R_p_c = cam1_R_p_c.t();
+            cam0_R_p_c = cam0_R_p_c.transpose();
+            cam1_R_p_c = cam1_R_p_c.transpose();
 
             // Delete the useless and used imu messages.
             if (remove)
@@ -176,7 +198,13 @@ namespace feature_tracker {
 
         /// IMU buffer for rotation between two frames
         std::vector<IMUDATA> imu_data;
-    
+
+        /// Take a vector from cam0 frame to the IMU frame.
+        Eigen::Matrix3d R_cam0_imu;
+        Eigen::Vector3d t_cam0_imu;
+        /// Take a vector from cam1 frame to the IMU frame.
+        Eigen::Matrix3d R_cam1_imu;
+        Eigen::Vector3d t_cam1_imu;
 
     }; /* class TrackPropagator */
 

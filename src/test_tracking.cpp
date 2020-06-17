@@ -229,10 +229,10 @@ int main()
     trackFEATS->set_calibration(params.camera_intrinsics);
 
 
-    thread thd_pub_imu(feed_measurement_imu);
-    thd_pub_imu.join();
+    // thread thd_pub_imu(feed_measurement_imu);
+    // thd_pub_imu.join();
 
-    feed_measurement_stereo();
+    // feed_measurement_stereo();
 
     // while (true)
     {
