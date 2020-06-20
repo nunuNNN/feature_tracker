@@ -37,14 +37,14 @@ namespace feature_tracker {
      * to find the stereo correspondence information also.
      * This uses the [calcOpticalFlowPyrLK](https://github.com/opencv/opencv/blob/master/modules/video/src/lkpyramid.cpp) OpenCV function to do the KLT tracking.
      */
-    class TrackKLT : public TrackBase {
+    class TrackMsckfVio : public TrackBase {
 
     public:
 
         /**
          * @brief Public default constructor
          */
-        TrackKLT() : TrackBase(), threshold(10), grid_x(8), grid_y(5), min_px_dist(30) {}
+        TrackMsckfVio() : TrackBase(), threshold(10), grid_x(8), grid_y(5), min_px_dist(30) {}
 
         /**
          * @brief Public constructor with configuration variables
@@ -55,7 +55,7 @@ namespace feature_tracker {
          * @param gridy size of grid in the y-direction / v-direction
          * @param minpxdist features need to be at least this number pixels away from each other
          */
-        explicit TrackKLT(int numfeats, int numaruco, int fast_threshold, int gridx, int gridy, int minpxdist) :
+        explicit TrackMsckfVio(int numfeats, int numaruco, int fast_threshold, int gridx, int gridy, int minpxdist) :
                  TrackBase(numfeats, numaruco), threshold(fast_threshold), grid_x(gridx), grid_y(gridy), min_px_dist(minpxdist) {}
 
 
