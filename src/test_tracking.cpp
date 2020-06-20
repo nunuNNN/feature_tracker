@@ -85,6 +85,7 @@ void load_params(FeatureTrackerOptions &params)
                     matrix_TCtoI.at(4),matrix_TCtoI.at(5),matrix_TCtoI.at(6),matrix_TCtoI.at(7),
                     matrix_TCtoI.at(8),matrix_TCtoI.at(9),matrix_TCtoI.at(10),matrix_TCtoI.at(11),
                     matrix_TCtoI.at(12),matrix_TCtoI.at(13),matrix_TCtoI.at(14),matrix_TCtoI.at(15);
+            params.camera_extrinsics_mat.insert({i, R_l});
         }
 
         else if (i == 1) {
@@ -96,6 +97,7 @@ void load_params(FeatureTrackerOptions &params)
                     matrix_TCtoI.at(4),matrix_TCtoI.at(5),matrix_TCtoI.at(6),matrix_TCtoI.at(7),
                     matrix_TCtoI.at(8),matrix_TCtoI.at(9),matrix_TCtoI.at(10),matrix_TCtoI.at(11),
                     matrix_TCtoI.at(12),matrix_TCtoI.at(13),matrix_TCtoI.at(14),matrix_TCtoI.at(15);
+            params.camera_extrinsics_mat.insert({i, R_r});
         }
 
 
@@ -226,13 +228,13 @@ int main()
 
     trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
     // trackFEATS = new TrackDescriptor(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.knn_ratio);
-    trackFEATS->set_calibration(params.camera_intrinsics);
+    trackFEATS->set_calibration(params.camera_intrinsics, params.camera_extrinsics_mat);
 
 
-    // thread thd_pub_imu(feed_measurement_imu);
-    // thd_pub_imu.join();
+    thread thd_pub_imu(feed_measurement_imu);
+    thd_pub_imu.join();
 
-    // feed_measurement_stereo();
+    feed_measurement_stereo();
 
     // while (true)
     {

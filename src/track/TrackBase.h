@@ -96,7 +96,8 @@ namespace feature_tracker {
          * @param camera_calib Calibration parameters for all cameras [fx,fy,cx,cy,d1,d2,d3,d4]
          * @param correct_active If we should re-undistort active features in our database
          */
-        void set_calibration(std::map<size_t,Eigen::VectorXd> camera_calib, bool correct_active=false) {
+        void set_calibration(std::map<size_t,Eigen::VectorXd> camera_calib, 
+                                std::map<size_t,cv::Mat> camera_extrinsics,bool correct_active=false) {
 
             // Initialize our mutex and camera intrinsic values if we are just starting up
             // The number of cameras should not change over time, thus we just need to check if our initial data is empty
@@ -130,6 +131,9 @@ namespace feature_tracker {
                     tempD(3) = cam.second(7);
                     camera_d_OPENCV.insert({cam.first, tempD});
                 }
+
+                propagator->set_imu_cam_calib(camera_extrinsics);
+
                 return;
             }
 
@@ -280,7 +284,9 @@ namespace feature_tracker {
          * @param wm Gyroscope measurement
          */
         void feed_imu(double timestamp, Eigen::Vector3d &am, Eigen::Vector3d &wm) {
-            // 江imu数据传递到TrackPropagator类中，imu的操作都是在该类中完成
+            // 将eigen形式的数据转换成opencv形式的
+
+            // 将imu数据传递到TrackPropagator类中，imu的操作都是在该类中完成
             propagator->push_imu(timestamp, wm, am);
         }
 

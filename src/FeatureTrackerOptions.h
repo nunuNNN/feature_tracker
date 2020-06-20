@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include <Eigen/Eigen>
+#include <opencv2/opencv.hpp>
 
 #include "utils/quat_ops.h"
 
@@ -64,6 +65,8 @@ namespace feature_tracker {
 
         /// Map between camid and camera extrinsics (q_ItoC, p_IinC).
         std::map<size_t,Eigen::VectorXd> camera_extrinsics;
+
+        std::map<size_t,cv::Mat> camera_extrinsics_mat;
 
         /// Map between camid and the dimensions of incoming images (width/cols, height/rows). This is normally only used during simulation.
         std::map<size_t,std::pair<int,int>> camera_wh;

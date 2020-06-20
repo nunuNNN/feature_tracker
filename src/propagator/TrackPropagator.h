@@ -8,6 +8,7 @@
 #include <vector>
 #include <mutex>
 #include <Eigen/Eigen>
+#include <opencv2/opencv.hpp>
 
 namespace feature_tracker {
 
@@ -77,21 +78,25 @@ namespace feature_tracker {
         /***
          * @brief set_calibration
         */
-        void set_imu_cam_calib(std::map<size_t,Eigen::Isometry3d> imu_cam_calib)
+        void set_imu_cam_calib(std::map<size_t,cv::Mat> T_imu_cam)
         {
             // Assert stereo
             assert(cam.size()==2);
 
-            for (auto const &cam : imu_cam_calib) {
+            for (auto const &cam : T_imu_cam) {
                 if (cam.first == 0)
                 {
-                    R_cam0_imu = cam.second.linear();
-                    t_cam0_imu = cam.second.translation();
+                    cv::Matx33d R_imu_cam0(cam.second(cv::Rect(0,0,3,3)));
+                    cv::Vec3d   t_imu_cam0 = cam.second(cv::Rect(3,0,1,3));
+                    R_cam0_imu = R_imu_cam0.t();
+                    t_cam0_imu = -R_imu_cam0.t() * t_imu_cam0;
                 }
                 else if (cam.first == 1)
                 {
-                    R_cam1_imu = cam.second.linear();
-                    t_cam1_imu = cam.second.translation();
+                    cv::Matx33d R_imu_cam1(cam.second(cv::Rect(0,0,3,3)));
+                    cv::Vec3d   t_imu_cam1 = cam.second(cv::Rect(3,0,1,3));
+                    R_cam1_imu = R_imu_cam1.t();
+                    t_cam1_imu = -R_imu_cam1.t() * t_imu_cam1;
                 }
             }
         }
@@ -99,8 +104,8 @@ namespace feature_tracker {
         /**
          * @brief propagator 
         */
-        void integrate_by_acc(double lastTime, double currTime, Eigen::Matrix3d &cam0_R_p_c, 
-                                    Eigen::Matrix3d &cam1_R_p_c, bool remove=false) {
+        void integrate_by_msckfVio(double lastTime, double currTime, cv::Matx33f& cam0_R_p_c, 
+                                    cv::Matx33f& cam1_R_p_c, bool remove=false) {
             // Find the start and the end limit within the imu msg buffer.
             std::unique_lock<std::mutex> lck(mtx_imu);
 
@@ -120,25 +125,24 @@ namespace feature_tracker {
                     break;
             }
 
-            Eigen::Vector3d mean_ang_vel(0.0, 0.0, 0.0);
+            cv::Vec3f mean_ang_vel(0.0, 0.0, 0.0);
             for (auto iter = begin_iter; iter < end_iter; ++iter)
-                mean_ang_vel += Eigen::Vector3d(iter->am.x(), 
-                                iter->am.y(), iter->am.z());
+                mean_ang_vel += cv::Vec3f(iter->am.x(), iter->am.y(), iter->am.z());
 
             if (end_iter-begin_iter > 0)
                 mean_ang_vel *= 1.0f / (end_iter-begin_iter);
             
             // Transform the mean angular velocity from the IMU
             // frame to the cam0 and cam1 frames.
-            Eigen::Vector3d cam0_mean_ang_vel = R_cam0_imu.transpose() * mean_ang_vel;
-            Eigen::Vector3d cam1_mean_ang_vel = R_cam1_imu.transpose() * mean_ang_vel;
+            cv::Vec3f cam0_mean_ang_vel = R_cam0_imu.t() * mean_ang_vel;
+            cv::Vec3f cam1_mean_ang_vel = R_cam1_imu.t() * mean_ang_vel;
 
             // Compute the relative rotation.
             double dtime = currTime - lastTime;
-            // cv::Rodrigues(cam0_mean_ang_vel*dtime, cam0_R_p_c);
-            // cv::Rodrigues(cam1_mean_ang_vel*dtime, cam1_R_p_c);
-            cam0_R_p_c = cam0_R_p_c.transpose();
-            cam1_R_p_c = cam1_R_p_c.transpose();
+            cv::Rodrigues(cam0_mean_ang_vel*dtime, cam0_R_p_c);
+            cv::Rodrigues(cam1_mean_ang_vel*dtime, cam1_R_p_c);
+            cam0_R_p_c = cam0_R_p_c.t();
+            cam1_R_p_c = cam1_R_p_c.t();
 
             // Delete the useless and used imu messages.
             if (remove)
@@ -200,11 +204,11 @@ namespace feature_tracker {
         std::vector<IMUDATA> imu_data;
 
         /// Take a vector from cam0 frame to the IMU frame.
-        Eigen::Matrix3d R_cam0_imu;
-        Eigen::Vector3d t_cam0_imu;
+        cv::Matx33d R_cam0_imu;
+        cv::Vec3d t_cam0_imu;
         /// Take a vector from cam1 frame to the IMU frame.
-        Eigen::Matrix3d R_cam1_imu;
-        Eigen::Vector3d t_cam1_imu;
+        cv::Matx33d R_cam1_imu;
+        cv::Vec3d t_cam1_imu;
 
     }; /* class TrackPropagator */
 
