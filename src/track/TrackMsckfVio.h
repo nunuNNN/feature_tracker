@@ -72,6 +72,8 @@ namespace feature_tracker {
 
     protected:
 
+        void perform_detection_msckf_vio();
+
         /**
          * @brief Detects new features in the current stereo pair
          * @param img0pyr left image we will detect features on (first level of pyramid)

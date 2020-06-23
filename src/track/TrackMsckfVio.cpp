@@ -404,5 +404,149 @@ void TrackMsckfVio::perform_matching(const std::vector<cv::Mat>& img0pyr, const 
 
 }
 
+void TrackMsckfVio::perform_detection_msckf_vio(const std::vector<cv::Mat>& img0pyr) {
 
+    cv::Mat curr_img = img0pyr.at(0);
+    // Size of each grid
+    static int grid_height = curr_img.rows / grid_x;
+    static int grid_width = curr_img.cols / grid_y;
+
+    // Create a mask to avoid redetecting existing features.
+    cv::Mat mask(curr_img.rows, curr_img.cols, CV_8U, Scalar(1));
+
+    // curr_features_ptr 这个参数需要自己传递进来, 
+    for (const auto &features : *curr_features_ptr)
+    {
+        for (const auto& feature : features.second)
+        {
+            const int y = static_cast<int>(feature.cam0_point.y);
+            const int x = static_cast<int>(feature.cam0_point.x);
+
+            int up_lim = y-2, bottom_lim = y+3, left_lim = x-2, right_lim = x+3;
+            if (up_lim < 0) up_lim = 0;
+            if (bottom_lim > curr_img.rows) bottom_lim = curr_img.rows;
+            if (left_lim < 0) left_lim = 0;
+            if (right_lim > curr_img.cols) right_lim = curr_img.cols;
+
+            Range row_range(up_lim, bottom_lim);
+            Range col_range(left_lim, right_lim);
+            mask(row_range, col_range) = 0;
+        }
+    }
+
+    // Detect new features.
+    vector<KeyPoint> new_features(0);
+    detector_ptr->detect(curr_img, new_features, mask);
+
+    // Collect the new detected features based on the grid.
+    // Select the ones with top response within each grid afterwards.
+    vector<vector<KeyPoint> > new_feature_sieve(grid_x*grid_y);
+    for (const auto& feature : new_features) 
+    {
+        int row = static_cast<int>(feature.pt.y / grid_height);
+        int col = static_cast<int>(feature.pt.x / grid_width);
+        new_feature_sieve[row*grid_x+col].push_back(feature);
+    }
+
+    new_features.clear();
+    for (auto& item : new_feature_sieve) 
+    {
+        if (item.size() > grid_max_feature_num) 
+        {
+            std::sort(item.begin(), item.end(), &ImageProcessor::keyPointCompareByResponse);
+            item.erase(item.begin()+grid_max_feature_num, item.end());
+        }
+        new_features.insert(new_features.end(), item.begin(), item.end());
+    }
+
+    int detected_new_features = new_features.size();
+
+    // Find the stereo matched points for the newly
+    // detected features.
+    vector<cv::Point2f> cam0_points(new_features.size());
+    for (int i = 0; i < new_features.size(); ++i)
+    {
+        cam0_points[i] = new_features[i].pt;
+    }
+
+    vector<cv::Point2f> cam1_points(0);
+    vector<unsigned char> inlier_markers(0);
+    stereoMatch(cam0_points, cam1_points, inlier_markers);
+
+    vector<cv::Point2f> cam0_inliers(0);
+    vector<cv::Point2f> cam1_inliers(0);
+    vector<float> response_inliers(0);
+    for (int i = 0; i < inlier_markers.size(); ++i) 
+    {
+        if (inlier_markers[i] == 0) continue;
+        cam0_inliers.push_back(cam0_points[i]);
+        cam1_inliers.push_back(cam1_points[i]);
+        response_inliers.push_back(new_features[i].response);
+    }
+
+    int matched_new_features = cam0_inliers.size();
+
+    if (matched_new_features < 5 &&
+        static_cast<double>(matched_new_features)/
+        static_cast<double>(detected_new_features) < 0.1)
+    {
+        cout << "Images at [%f] seems unsynced..."<< endl;
+    }
+
+    // Group the features into grids
+    GridFeatures grid_new_features;
+    for (int code = 0; code < grid_x*grid_y; ++code)
+    {
+        grid_new_features[code] = vector<FeatureMetaData>(0);
+    }
+
+    for (int i = 0; i < cam0_inliers.size(); ++i) {
+        const cv::Point2f& cam0_point = cam0_inliers[i];
+        const cv::Point2f& cam1_point = cam1_inliers[i];
+        const float& response = response_inliers[i];
+
+        int row = static_cast<int>(cam0_point.y / grid_height);
+        int col = static_cast<int>(cam0_point.x / grid_width);
+        int code = row*grid_x + col;
+
+        FeatureMetaData new_feature;
+        new_feature.response = response;
+        new_feature.cam0_point = cam0_point;
+        new_feature.cam1_point = cam1_point;
+        grid_new_features[code].push_back(new_feature);
+    }
+
+    // Sort the new features in each grid based on its response.
+    for (auto& item : grid_new_features)
+    {
+        std::sort(item.second.begin(), item.second.end(),
+        &ImageProcessor::featureCompareByResponse);
+    }
+
+    int new_added_feature_num = 0;
+    // Collect new features within each grid with high response.
+    for (int code = 0; code < grid_x*grid_y; ++code) {
+        vector<FeatureMetaData>& features_this_grid = (*curr_features_ptr)[code];
+        vector<FeatureMetaData>& new_features_this_grid = grid_new_features[code];
+
+        if (features_this_grid.size() >=
+            processor_config.grid_min_feature_num) continue;
+
+        int vacancy_num = processor_config.grid_min_feature_num -
+        features_this_grid.size();
+        for (int k = 0;
+            k < vacancy_num && k < new_features_this_grid.size(); ++k) {
+        features_this_grid.push_back(new_features_this_grid[k]);
+        features_this_grid.back().id = next_feature_id++;
+        features_this_grid.back().lifetime = 1;
+
+        ++new_added_feature_num;
+        }
+    }
+
+    //printf("\033[0;33m detected: %d; matched: %d; new added feature: %d\033[0m\n",
+    //    detected_new_features, matched_new_features, new_added_feature_num);
+
+    return;
+}
 
