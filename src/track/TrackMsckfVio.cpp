@@ -20,13 +20,12 @@ void TrackMsckfVio::feed_stereo(double timestamp, cv::Mat &img_leftin, cv::Mat &
     img_right = img_rightin.clone();
 
     // createImagePyramids()
-    std::vector<cv::Mat> imgpyr_left, imgpyr_right;
     cv::buildOpticalFlowPyramid(
-        img_left, imgpyr_left,
+        img_left, curr_cam0_pyramid_,
         win_size, pyr_levels, true, cv::BORDER_REFLECT_101,
         cv::BORDER_CONSTANT, false);
     cv::buildOpticalFlowPyramid(
-        img_right, imgpyr_right,
+        img_right, curr_cam1_pyramid_,
         win_size, pyr_levels, true, cv::BORDER_REFLECT_101,
         cv::BORDER_CONSTANT, false);
     rT2 =  boost::posix_time::microsec_clock::local_time();
@@ -35,12 +34,12 @@ void TrackMsckfVio::feed_stereo(double timestamp, cv::Mat &img_leftin, cv::Mat &
     // This also handles, the tracking initalization on the first call to this extractor
     if(pts_last[cam_id_left].empty() || pts_last[cam_id_right].empty()) {
         // Track into the new image
-        perform_detection_stereo(imgpyr_left, imgpyr_right, pts_last[cam_id_left], pts_last[cam_id_right], ids_last[cam_id_left], ids_last[cam_id_right]);
+        perform_detection_stereo(curr_cam0_pyramid_, curr_cam1_pyramid_, pts_last[cam_id_left], pts_last[cam_id_right], ids_last[cam_id_left], ids_last[cam_id_right]);
         // Save the current image and pyramid
         img_last[cam_id_left] = img_left.clone();
         img_last[cam_id_right] = img_right.clone();
-        img_pyramid_last[cam_id_left] = imgpyr_left;
-        img_pyramid_last[cam_id_right] = imgpyr_right;
+        img_pyramid_last[cam_id_left] = curr_cam0_pyramid_;
+        img_pyramid_last[cam_id_right] = curr_cam1_pyramid_;
         return;
     }
 
@@ -192,230 +191,17 @@ void TrackMsckfVio::feed_stereo(double timestamp, cv::Mat &img_leftin, cv::Mat &
 }
 
 
-
-void TrackMsckfVio::perform_detection_stereo(const std::vector<cv::Mat> &img0pyr, const std::vector<cv::Mat> &img1pyr,
-                                        std::vector<cv::KeyPoint> &pts0, std::vector<cv::KeyPoint> &pts1,
-                                        std::vector<size_t> &ids0, std::vector<size_t> &ids1) {
-
-    // Create a 2D occupancy grid for this current image
-    // Note that we scale this down, so that each grid point is equal to a set of pixels
-    // This means that we will reject points that less then grid_px_size points away then existing features
-    Eigen::MatrixXi grid_2d_0 = Eigen::MatrixXi::Zero((int)(img0pyr.at(0).rows/min_px_dist)+2, (int)(img0pyr.at(0).cols/min_px_dist)+2);
-    Eigen::MatrixXi grid_2d_1 = Eigen::MatrixXi::Zero((int)(img1pyr.at(0).rows/min_px_dist)+2, (int)(img1pyr.at(0).cols/min_px_dist)+2);
-    auto it0 = pts0.begin();
-    auto it1 = ids0.begin();
-    while(it0 != pts0.end()) {
-        // Get current left keypoint
-        cv::KeyPoint kpt = *it0;
-        // Check if this keypoint is near another point
-        if(grid_2d_0((int)(kpt.pt.y/min_px_dist),(int)(kpt.pt.x/min_px_dist)) == 1) {
-            it0 = pts0.erase(it0);
-            it1 = ids0.erase(it1);
-            continue;
-        }
-        // Else we are good, move forward to the next point
-        grid_2d_0((int)(kpt.pt.y/min_px_dist),(int)(kpt.pt.x/min_px_dist)) = 1;
-        it0++;
-        it1++;
-    }
-    it0 = pts1.begin();
-    it1 = ids1.begin();
-    while(it0 != pts1.end()) {
-        // Get current right keypoint
-        cv::KeyPoint kpt = *it0;
-        // Check if this keypoint is near another point
-        if(grid_2d_1((int)(kpt.pt.y/min_px_dist),(int)(kpt.pt.x/min_px_dist)) == 1) {
-            it0 = pts1.erase(it0);
-            it1 = ids1.erase(it1);
-            continue;
-        }
-        // Else we are good, move forward to the next point
-        grid_2d_1((int)(kpt.pt.y/min_px_dist),(int)(kpt.pt.x/min_px_dist)) = 1;
-        it0++;
-        it1++;
-    }
-
-    // First compute how many more features we need to extract from this image
-    int num_featsneeded_0 = num_features - (int)pts0.size();
-
-    // LEFT: if we need features we should extract them in the current frame
-    // LEFT: we will also try to track them from this frame over to the right frame
-    // LEFT: in the case that we have two features that are the same, then we should merge them
-    if(num_featsneeded_0 > 1) {
-
-        // Extract our features (use fast with griding)
-        std::vector<cv::KeyPoint> pts0_ext;
-        Grider_FAST::perform_griding(img0pyr.at(0), pts0_ext, num_featsneeded_0, grid_x, grid_y, threshold, true);
-
-        // Now, reject features that are close a current feature
-        std::vector<cv::KeyPoint> kpts0_new;
-        std::vector<cv::Point2f> pts0_new;
-        for(auto& kpt : pts0_ext) {
-            // See if there is a point at this location
-            if(grid_2d_0((int)(kpt.pt.y/min_px_dist),(int)(kpt.pt.x/min_px_dist)) == 1)
-                continue;
-            // Else lets add it!
-            kpts0_new.push_back(kpt);
-            pts0_new.push_back(kpt.pt);
-            grid_2d_0((int)(kpt.pt.y/min_px_dist),(int)(kpt.pt.x/min_px_dist)) = 1;
-        }
-
-        // TODO: Project points from the left frame into the right frame
-        // TODO: This will not work for large baseline systems.....
-        std::vector<cv::KeyPoint> kpts1_new;
-        std::vector<cv::Point2f> pts1_new;
-        kpts1_new = kpts0_new;
-        pts1_new = pts0_new;
-
-        // If we have points, do KLT tracking to get the valid projections
-        if(!pts0_new.empty()) {
-
-            // Do our KLT tracking from the left to the right frame of reference
-            // Note: we have a pretty big window size here since our projection might be bad
-            // Note: but this might cause failure in cases of repeated textures (eg. checkerboard)
-            std::vector<uchar> mask;
-            std::vector<float> error;
-            cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 15, 0.01);
-            cv::calcOpticalFlowPyrLK(img0pyr, img1pyr, pts0_new, pts1_new, mask, error, win_size, pyr_levels, term_crit, cv::OPTFLOW_USE_INITIAL_FLOW);
-
-            // Loop through and record only ones that are valid
-            for(size_t i=0; i<pts0_new.size(); i++) {
-
-                // Check that our tracks are in bounds
-                bool outof_bounds_0 = (pts0_new.at(i).x < 0 || pts0_new.at(i).y < 0 || pts0_new.at(i).x >= img0pyr.at(0).cols || pts0_new.at(i).y >= img0pyr.at(0).rows);
-                bool outof_bounds_1 = (pts1_new.at(i).x < 0 || pts1_new.at(i).y < 0 || pts1_new.at(i).x >= img1pyr.at(0).cols || pts1_new.at(i).y >= img1pyr.at(0).rows);
-
-                // If this is not already in the right image, then we should treat it as a stereo
-                // Otherwise we will treat this as just a monocular track of the feature
-                // TODO: we should check to see if we can combine this new feature and the one in the right
-                if(!outof_bounds_0 && mask[i] == 1 && !outof_bounds_1 && !(grid_2d_1((int)(pts1_new.at(i).y/min_px_dist),(int)(pts1_new.at(i).x/min_px_dist)) == 1)) {
-                    // update the uv coordinates
-                    kpts0_new.at(i).pt = pts0_new.at(i);
-                    kpts1_new.at(i).pt = pts1_new.at(i);
-                    // append the new uv coordinate
-                    pts0.push_back(kpts0_new.at(i));
-                    pts1.push_back(kpts1_new.at(i));
-                    // move id forward and append this new point
-                    size_t temp = ++currid;
-                    ids0.push_back(temp);
-                    ids1.push_back(temp);
-                } else if(!outof_bounds_0) {
-                    // update the uv coordinates
-                    kpts0_new.at(i).pt = pts0_new.at(i);
-                    // append the new uv coordinate
-                    pts0.push_back(kpts0_new.at(i));
-                    // move id forward and append this new point
-                    size_t temp = ++currid;
-                    ids0.push_back(temp);
-                }
-            }
-
-        }
-    }
-
-    // RIGHT: if we need features we should extract them in the current frame
-    // RIGHT: note that we don't track them to the left as we already did left->right tracking above
-    int num_featsneeded_1 = num_features - (int)pts1.size();
-    if(num_featsneeded_1 > 1) {
-
-        // Extract our features (use fast with griding)
-        std::vector<cv::KeyPoint> pts1_ext;
-        Grider_FAST::perform_griding(img1pyr.at(0), pts1_ext, num_featsneeded_1, grid_x, grid_y, threshold, true);
-
-        // Now, reject features that are close a current feature
-        for(auto& kpt : pts1_ext) {
-            // See if there is a point at this location
-            if(grid_2d_1((int)(kpt.pt.y/min_px_dist),(int)(kpt.pt.x/min_px_dist)) == 1)
-                continue;
-            // Else lets add it!
-            pts1.push_back(kpt);
-            size_t temp = ++currid;
-            ids1.push_back(temp);
-            grid_2d_1((int)(kpt.pt.y/min_px_dist),(int)(kpt.pt.x/min_px_dist)) = 1;
-        }
-
-
-    }
-
-
-}
-
-
-void TrackMsckfVio::perform_matching(const std::vector<cv::Mat>& img0pyr, const std::vector<cv::Mat>& img1pyr,
-                                std::vector<cv::KeyPoint>& kpts0, std::vector<cv::KeyPoint>& kpts1,
-                                size_t id0, size_t id1,
-                                std::vector<uchar>& mask_out) {
-
-    // We must have equal vectors
-    assert(kpts0.size() == kpts1.size());
-
-    // Return if we don't have any points
-    if(kpts0.empty() || kpts1.empty())
-        return;
-
-    // Convert keypoints into points (stupid opencv stuff)
-    std::vector<cv::Point2f> pts0, pts1;
-    for(size_t i=0; i<kpts0.size(); i++) {
-        pts0.push_back(kpts0.at(i).pt);
-        pts1.push_back(kpts1.at(i).pt);
-    }
-
-    // If we don't have enough points for ransac just return empty
-    // We set the mask to be all zeros since all points failed RANSAC
-    if(pts0.size() < 10) {
-        for(size_t i=0; i<pts0.size(); i++)
-            mask_out.push_back((uchar)0);
-        return;
-    }
-
-    // Now do KLT tracking to get the valid new points
-    std::vector<uchar> mask_klt;
-    std::vector<float> error;
-    cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 15, 0.01);
-    cv::calcOpticalFlowPyrLK(img0pyr, img1pyr, pts0, pts1, mask_klt, error, win_size, pyr_levels, term_crit, cv::OPTFLOW_USE_INITIAL_FLOW);
-
-
-    // Normalize these points, so we can then do ransac
-    // We don't want to do ransac on distorted image uvs since the mapping is nonlinear
-    std::vector<cv::Point2f> pts0_n, pts1_n;
-    for(size_t i=0; i<pts0.size(); i++) {
-        pts0_n.push_back(undistort_point(pts0.at(i),id0));
-        pts1_n.push_back(undistort_point(pts1.at(i),id1));
-    }
-
-    // Do RANSAC outlier rejection (note since we normalized the max pixel error is now in the normalized cords)
-    std::vector<uchar> mask_rsc;
-    double max_focallength_img0 = std::max(camera_k_OPENCV.at(id0)(0,0),camera_k_OPENCV.at(id0)(1,1));
-    double max_focallength_img1 = std::max(camera_k_OPENCV.at(id1)(0,0),camera_k_OPENCV.at(id1)(1,1));
-    double max_focallength = std::max(max_focallength_img0,max_focallength_img1);
-    cv::findFundamentalMat(pts0_n, pts1_n, cv::FM_RANSAC, 1/max_focallength, 0.999, mask_rsc);
-
-    // Loop through and record only ones that are valid
-    for(size_t i=0; i<mask_klt.size(); i++) {
-        auto mask = (uchar)((i < mask_klt.size() && mask_klt[i] && i < mask_rsc.size() && mask_rsc[i])? 1 : 0);
-        mask_out.push_back(mask);
-    }
-
-    // Copy back the updated positions
-    for(size_t i=0; i<pts0.size(); i++) {
-        kpts0.at(i).pt = pts0.at(i);
-        kpts1.at(i).pt = pts1.at(i);
-    }
-
-}
-
-void TrackMsckfVio::perform_detection_msckf_vio(const std::vector<cv::Mat>& img0pyr) {
-
-    cv::Mat curr_img = img0pyr.at(0);
+void TrackMsckfVio::perform_detection_msckf_vio(const std::vector<cv::Mat>& img0pyr, const std::vector<cv::Mat>& img1pyr)
+{
+    cv::Mat detection_img = img0pyr.at(0);
     // Size of each grid
-    static int grid_height = curr_img.rows / grid_x;
-    static int grid_width = curr_img.cols / grid_y;
+    static int grid_height = detection_img.rows / grid_row;
+    static int grid_width = detection_img.cols / grid_col;
 
     // Create a mask to avoid redetecting existing features.
-    cv::Mat mask(curr_img.rows, curr_img.cols, CV_8U, Scalar(1));
+    cv::Mat mask(detection_img.rows, detection_img.cols, CV_8U, Scalar(1));
 
-    // curr_features_ptr 这个参数需要自己传递进来, 
-    for (const auto &features : *curr_features_ptr)
+    for (const auto &features : *prev_features_ptr)
     {
         for (const auto& feature : features.second)
         {
@@ -424,9 +210,9 @@ void TrackMsckfVio::perform_detection_msckf_vio(const std::vector<cv::Mat>& img0
 
             int up_lim = y-2, bottom_lim = y+3, left_lim = x-2, right_lim = x+3;
             if (up_lim < 0) up_lim = 0;
-            if (bottom_lim > curr_img.rows) bottom_lim = curr_img.rows;
+            if (bottom_lim > detection_img.rows) bottom_lim = detection_img.rows;
             if (left_lim < 0) left_lim = 0;
-            if (right_lim > curr_img.cols) right_lim = curr_img.cols;
+            if (right_lim > detection_img.cols) right_lim = detection_img.cols;
 
             Range row_range(up_lim, bottom_lim);
             Range col_range(left_lim, right_lim);
@@ -436,16 +222,16 @@ void TrackMsckfVio::perform_detection_msckf_vio(const std::vector<cv::Mat>& img0
 
     // Detect new features.
     vector<KeyPoint> new_features(0);
-    detector_ptr->detect(curr_img, new_features, mask);
+    detector_ptr->detect(detection_img, new_features, mask);
 
     // Collect the new detected features based on the grid.
     // Select the ones with top response within each grid afterwards.
-    vector<vector<KeyPoint> > new_feature_sieve(grid_x*grid_y);
+    vector<vector<KeyPoint> > new_feature_sieve(grid_row*grid_col);
     for (const auto& feature : new_features) 
     {
         int row = static_cast<int>(feature.pt.y / grid_height);
         int col = static_cast<int>(feature.pt.x / grid_width);
-        new_feature_sieve[row*grid_x+col].push_back(feature);
+        new_feature_sieve[row*grid_row+col].push_back(feature);
     }
 
     new_features.clear();
@@ -453,7 +239,7 @@ void TrackMsckfVio::perform_detection_msckf_vio(const std::vector<cv::Mat>& img0
     {
         if (item.size() > grid_max_feature_num) 
         {
-            std::sort(item.begin(), item.end(), &ImageProcessor::keyPointCompareByResponse);
+            std::sort(item.begin(), item.end(), &TrackMsckfVio::keyPointCompareByResponse);
             item.erase(item.begin()+grid_max_feature_num, item.end());
         }
         new_features.insert(new_features.end(), item.begin(), item.end());
@@ -471,7 +257,7 @@ void TrackMsckfVio::perform_detection_msckf_vio(const std::vector<cv::Mat>& img0
 
     vector<cv::Point2f> cam1_points(0);
     vector<unsigned char> inlier_markers(0);
-    stereoMatch(cam0_points, cam1_points, inlier_markers);
+    stereoMatch(img0pyr, img1pyr, cam0_points, cam1_points, inlier_markers);
 
     vector<cv::Point2f> cam0_inliers(0);
     vector<cv::Point2f> cam1_inliers(0);
@@ -495,19 +281,20 @@ void TrackMsckfVio::perform_detection_msckf_vio(const std::vector<cv::Mat>& img0
 
     // Group the features into grids
     GridFeatures grid_new_features;
-    for (int code = 0; code < grid_x*grid_y; ++code)
+    for (int code = 0; code < grid_row*grid_col; ++code)
     {
         grid_new_features[code] = vector<FeatureMetaData>(0);
     }
 
-    for (int i = 0; i < cam0_inliers.size(); ++i) {
+    for (int i = 0; i < cam0_inliers.size(); ++i) 
+    {
         const cv::Point2f& cam0_point = cam0_inliers[i];
         const cv::Point2f& cam1_point = cam1_inliers[i];
         const float& response = response_inliers[i];
 
         int row = static_cast<int>(cam0_point.y / grid_height);
         int col = static_cast<int>(cam0_point.x / grid_width);
-        int code = row*grid_x + col;
+        int code = row*grid_row + col;
 
         FeatureMetaData new_feature;
         new_feature.response = response;
@@ -519,23 +306,20 @@ void TrackMsckfVio::perform_detection_msckf_vio(const std::vector<cv::Mat>& img0
     // Sort the new features in each grid based on its response.
     for (auto& item : grid_new_features)
     {
-        std::sort(item.second.begin(), item.second.end(),
-        &ImageProcessor::featureCompareByResponse);
+        std::sort(item.second.begin(), item.second.end(), &TrackMsckfVio::featureCompareByResponse);
     }
 
     int new_added_feature_num = 0;
     // Collect new features within each grid with high response.
-    for (int code = 0; code < grid_x*grid_y; ++code) {
-        vector<FeatureMetaData>& features_this_grid = (*curr_features_ptr)[code];
+    for (int code = 0; code < grid_row*grid_col; ++code) 
+    {
+        vector<FeatureMetaData>& features_this_grid = (*prev_features_ptr)[code];
         vector<FeatureMetaData>& new_features_this_grid = grid_new_features[code];
 
-        if (features_this_grid.size() >=
-            processor_config.grid_min_feature_num) continue;
+        if (features_this_grid.size() >= grid_min_feature_num) continue;
 
-        int vacancy_num = processor_config.grid_min_feature_num -
-        features_this_grid.size();
-        for (int k = 0;
-            k < vacancy_num && k < new_features_this_grid.size(); ++k) {
+        int vacancy_num = grid_min_feature_num - features_this_grid.size();
+        for (int k = 0; k < vacancy_num && k < new_features_this_grid.size(); ++k) {
         features_this_grid.push_back(new_features_this_grid[k]);
         features_this_grid.back().id = next_feature_id++;
         features_this_grid.back().lifetime = 1;
@@ -547,6 +331,551 @@ void TrackMsckfVio::perform_detection_msckf_vio(const std::vector<cv::Mat>& img0
     //printf("\033[0;33m detected: %d; matched: %d; new added feature: %d\033[0m\n",
     //    detected_new_features, matched_new_features, new_added_feature_num);
 
+    // grid_max_feature_num
+    for (auto& item : *prev_features_ptr) 
+    {
+        auto& grid_features = item.second;
+        // Continue if the number of features in this grid does
+        // not exceed the upper bound.
+        if (grid_features.size() <= grid_max_feature_num) continue;
+        std::sort(grid_features.begin(), grid_features.end(), &TrackMsckfVio::featureCompareByLifetime);
+        grid_features.erase(grid_features.begin()+grid_max_feature_num, grid_features.end());
+    }
+
     return;
 }
 
+void TrackMsckfVio::stereoMatch(const std::vector<cv::Mat>& img0pyr, 
+                                const std::vector<cv::Mat>& img1pyr，
+                                const vector<cv::Point2f>& cam0_points,
+                                vector<cv::Point2f>& cam1_points,
+                                vector<unsigned char>& inlier_markers) 
+{
+
+    if (cam0_points.size() == 0) return;
+
+    // rotation from stereo extrinsics
+    const cv::Matx33d R_cam0_cam1 = R_cam_imu.at(0).t() * R_cam_imu.at(1);
+    // Compute the relative rotation between the cam0
+    // frame and cam1 frame.
+    const cv::Vec3d t_cam0_cam1 = R_cam_imu.at(1).t() * (t_cam_imu.at(0)-t_cam_imu.at(1));
+    // Initialize cam1_points by projecting cam0_points to cam1 using the
+    const cv::Matx33d camK0 = camera_k_OPENCV.at(0);
+    const cv::Vec4d camD0 = camera_d_OPENCV.at(0);
+    const cv::Matx33d camK1 = camera_k_OPENCV.at(1);
+    const cv::Vec4d camD1 = camera_d_OPENCV.at(1);
+
+    if (cam1_points.size() == 0) 
+    {
+        // undistortPoints
+        vector<cv::Point2f> cam0_points_undistorted;
+        cv::undistortPoints(cam0_points, cam0_points_undistorted, 
+                            camK0, camD0, R_cam0_cam1);
+        // distortPoints
+        vector<cv::Point3f> homogenous_pts;
+        cv::convertPointsToHomogeneous(cam0_points_undistorted, homogenous_pts);
+        cv::projectPoints(homogenous_pts, cv::Vec3d::zeros(), cv::Vec3d::zeros(), 
+                        camK1, camD1, cam1_points);
+    }
+
+    // Track features using LK optical flow method.
+    cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 15, 0.01);
+    calcOpticalFlowPyrLK(img0pyr, img1pyr, cam0_points, cam1_points,
+                    inlier_markers, noArray(), win_size, pyr_levels, term_crit,
+                    cv::OPTFLOW_USE_INITIAL_FLOW);
+
+    // Mark those tracked points out of the image region
+    // as untracked.
+    for (int i = 0; i < cam1_points.size(); ++i) 
+    {
+        if (inlier_markers[i] == 0) continue;
+        
+        if (cam1_points[i].y < 0 ||
+            cam1_points[i].y > img0pyr.at(0).rows-1 ||
+            cam1_points[i].x < 0 ||
+            cam1_points[i].x > img0pyr.at(0).cols-1)
+        inlier_markers[i] = 0;
+    }
+
+    // Compute the essential matrix.
+    const cv::Matx33d t_cam0_cam1_hat(
+        0.0, -t_cam0_cam1[2], t_cam0_cam1[1],
+        t_cam0_cam1[2], 0.0, -t_cam0_cam1[0],
+        -t_cam0_cam1[1], t_cam0_cam1[0], 0.0);
+    const cv::Matx33d E = t_cam0_cam1_hat * R_cam0_cam1;
+
+    // Further remove outliers based on the known
+    // essential matrix.
+    vector<cv::Point2f> cam0_points_undistorted(0);
+    vector<cv::Point2f> cam1_points_undistorted(0);
+    cv::undistortPoints(cam0_points, cam0_points_undistorted, camK0, camD0);
+    cv::undistortPoints(cam1_points, cam1_points_undistorted, camK1, camD1);
+
+    double norm_pixel_unit = 4.0 / (camK0(0,0)+camK0(1,1)+camK1(0,0)+camK1(1,1));
+
+    for (int i = 0; i < cam0_points_undistorted.size(); ++i) 
+    {
+        if (inlier_markers[i] == 0) continue;
+
+        cv::Vec3d pt0(cam0_points_undistorted[i].x, cam0_points_undistorted[i].y, 1.0);
+        cv::Vec3d pt1(cam1_points_undistorted[i].x, cam1_points_undistorted[i].y, 1.0);
+        cv::Vec3d epipolar_line = E * pt0;
+        double error = fabs((pt1.t() * epipolar_line)[0]) / sqrt(
+            epipolar_line[0]*epipolar_line[0]+epipolar_line[1]*epipolar_line[1]);
+
+        if (error > stereo_threshold*norm_pixel_unit)
+            inlier_markers[i] = 0;
+    }
+
+    return;
+}
+
+
+void TrackMsckfVio::trackFeatures(const std::vector<cv::Mat>& img0pyr, 
+                                const std::vector<cv::Mat>& img1pyr,
+                                const std::vector<cv::Mat>& img0lastpyr, 
+                                const std::vector<cv::Mat>& img1lastpyr) 
+{
+    // Size of each grid.
+    static int grid_height = img0pyr.at(0).rows / grid_row;
+    static int grid_width = img0pyr.at(0).cols / grid_col;
+
+    // Compute a rough relative rotation which takes a vector
+    // from the previous frame to the current frame.
+    Matx33f cam0_R_p_c;
+    Matx33f cam1_R_p_c;
+    integrateImuData(cam0_R_p_c, cam1_R_p_c);
+
+    // Organize the features in the previous image.
+    vector<FeatureIDType> prev_ids(0);
+    vector<int> prev_lifetime(0);
+    vector<Point2f> prev_cam0_points(0);
+    vector<Point2f> prev_cam1_points(0);
+
+    for (const auto& item : *prev_features_ptr) 
+    {
+        for (const auto& prev_feature : item.second) 
+        {
+        prev_ids.push_back(prev_feature.id);
+        prev_lifetime.push_back(prev_feature.lifetime);
+        prev_cam0_points.push_back(prev_feature.cam0_point);
+        prev_cam1_points.push_back(prev_feature.cam1_point);
+        }
+    }
+
+    // Number of the features before tracking.
+    before_tracking = prev_cam0_points.size();
+
+    // Abort tracking if there is no features in
+    // the previous frame.
+    if (prev_ids.size() == 0) return;
+
+    // Track features using LK optical flow method.
+    vector<Point2f> curr_cam0_points(0);
+    vector<unsigned char> track_inliers(0);
+
+    curr_cam0_points.resize(prev_cam0_points.size());
+    cv::Matx33f camK0 = camera_k_OPENCV.at(0);
+    cv::Matx33f H = camK0 * cam0_R_p_c * camK0.inv();
+    for (int i = 0; i < prev_cam0_points.size(); ++i) {
+        cv::Vec3f p1(prev_cam0_points[i].x, prev_cam0_points[i].y, 1.0f);
+        cv::Vec3f p2 = H * p1;
+        curr_cam0_points[i].x = p2[0] / p2[2];
+        curr_cam0_points[i].y = p2[1] / p2[2];
+    }
+
+    // Track features using LK optical flow method.
+    cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 15, 0.01);
+    calcOpticalFlowPyrLK(img0pyr, img0lastpyr, prev_cam0_points, curr_cam0_points,
+                    track_inliers, noArray(), win_size, pyr_levels, term_crit,
+                    cv::OPTFLOW_USE_INITIAL_FLOW);
+
+    // Mark those tracked points out of the image region
+    // as untracked.
+    for (int i = 0; i < curr_cam0_points.size(); ++i) 
+    {
+        if (track_inliers[i] == 0) continue;
+        if (curr_cam0_points[i].y < 0 ||
+            curr_cam0_points[i].y > img0pyr.at(0).rows-1 ||
+            curr_cam0_points[i].x < 0 ||
+            curr_cam0_points[i].x > img0pyr.at(0).cols-1)ååå
+            track_inliers[i] = 0;
+    }
+
+    // Collect the tracked points.
+    vector<FeatureIDType> prev_tracked_ids(0);
+    vector<int> prev_tracked_lifetime(0);
+    vector<Point2f> prev_tracked_cam0_points(0);
+    vector<Point2f> prev_tracked_cam1_points(0);
+    vector<Point2f> curr_tracked_cam0_points(0);
+
+    removeUnmarkedElements(
+        prev_ids, track_inliers, prev_tracked_ids);
+    removeUnmarkedElements(
+        prev_lifetime, track_inliers, prev_tracked_lifetime);
+    removeUnmarkedElements(
+        prev_cam0_points, track_inliers, prev_tracked_cam0_points);
+    removeUnmarkedElements(
+        prev_cam1_points, track_inliers, prev_tracked_cam1_points);
+    removeUnmarkedElements(
+        curr_cam0_points, track_inliers, curr_tracked_cam0_points);
+
+    // Number of features left after tracking.
+    after_tracking = curr_tracked_cam0_points.size();
+
+
+    // Outlier removal involves three steps, which forms a close
+    // loop between the previous and current frames of cam0 (left)
+    // and cam1 (right). Assuming the stereo matching between the
+    // previous cam0 and cam1 images are correct, the three steps are:
+    //
+    // prev frames cam0 ----------> cam1
+    //              |                |
+    //              |ransac          |ransac
+    //              |   stereo match |
+    // curr frames cam0 ----------> cam1
+    //
+    // 1) Stereo matching between current images of cam0 and cam1.
+    // 2) RANSAC between previous and current images of cam0.
+    // 3) RANSAC between previous and current images of cam1.
+    //
+    // For Step 3, tracking between the images is no longer needed.
+    // The stereo matching results are directly used in the RANSAC.
+
+    // Step 1: stereo matching.
+    vector<Point2f> curr_cam1_points(0);
+    vector<unsigned char> match_inliers(0);
+    stereoMatch(img0pyr, img1pyr, curr_tracked_cam0_points, curr_cam1_points, match_inliers);
+
+    vector<FeatureIDType> prev_matched_ids(0);
+    vector<int> prev_matched_lifetime(0);
+    vector<Point2f> prev_matched_cam0_points(0);
+    vector<Point2f> prev_matched_cam1_points(0);
+    vector<Point2f> curr_matched_cam0_points(0);
+    vector<Point2f> curr_matched_cam1_points(0);
+
+    removeUnmarkedElements(
+        prev_tracked_ids, match_inliers, prev_matched_ids);
+    removeUnmarkedElements(
+        prev_tracked_lifetime, match_inliers, prev_matched_lifetime);
+    removeUnmarkedElements(
+        prev_tracked_cam0_points, match_inliers, prev_matched_cam0_points);
+    removeUnmarkedElements(
+        prev_tracked_cam1_points, match_inliers, prev_matched_cam1_points);
+    removeUnmarkedElements(
+        curr_tracked_cam0_points, match_inliers, curr_matched_cam0_points);
+    removeUnmarkedElements(
+        curr_cam1_points, match_inliers, curr_matched_cam1_points);
+
+    // Number of features left after stereo matching.
+    after_matching = curr_matched_cam0_points.size();
+
+    // Step 2 and 3: RANSAC on temporal image pairs of cam0 and cam1.
+    vector<int> cam0_ransac_inliers(0);
+    twoPointRansac(prev_matched_cam0_points, curr_matched_cam0_points,
+        cam0_R_p_c, cam0_intrinsics, cam0_distortion_model,
+        cam0_distortion_coeffs, processor_config.ransac_threshold,
+        0.99, cam0_ransac_inliers);
+
+    vector<int> cam1_ransac_inliers(0);
+    twoPointRansac(prev_matched_cam1_points, curr_matched_cam1_points,
+        cam1_R_p_c, cam1_intrinsics, cam1_distortion_model,
+        cam1_distortion_coeffs, processor_config.ransac_threshold,
+        0.99, cam1_ransac_inliers);
+
+    // Number of features after ransac.
+    after_ransac = 0;
+
+    for (int i = 0; i < cam0_ransac_inliers.size(); ++i) 
+    {
+        if (cam0_ransac_inliers[i] == 0 || cam1_ransac_inliers[i] == 0) 
+            continue;
+        int row = static_cast<int>(curr_matched_cam0_points[i].y / grid_height);
+        int col = static_cast<int>(curr_matched_cam0_points[i].x / grid_width);
+        int code = row*processor_config.grid_col + col;
+        (*curr_features_ptr)[code].push_back(FeatureMetaData());
+
+        FeatureMetaData& grid_new_feature = (*curr_features_ptr)[code].back();
+        grid_new_feature.id = prev_matched_ids[i];
+        grid_new_feature.lifetime = ++prev_matched_lifetime[i];
+        grid_new_feature.cam0_point = curr_matched_cam0_points[i];
+        grid_new_feature.cam1_point = curr_matched_cam1_points[i];
+
+        ++after_ransac;
+    }
+
+    // Compute the tracking rate.
+    int prev_feature_num = 0;
+    for (const auto& item : *prev_features_ptr)
+        prev_feature_num += item.second.size();
+
+    int curr_feature_num = 0;
+    for (const auto& item : *curr_features_ptr)
+        curr_feature_num += item.second.size();
+
+    //printf(
+    //    "\033[0;32m candidates: %d; raw track: %d; stereo match: %d; ransac: %d/%d=%f\033[0m\n",
+    //    before_tracking, after_tracking, after_matching,
+    //    curr_feature_num, prev_feature_num,
+    //    static_cast<double>(curr_feature_num)/
+    //    (static_cast<double>(prev_feature_num)+1e-5));
+
+    return;
+}
+
+void TrackMsckfVio::twoPointRansac(const vector<Point2f>& pts1, const vector<Point2f>& pts2,
+                                const cv::Matx33f& R_p_c, const cv::Vec4d& intrinsics,
+                                const std::string& distortion_model,
+                                const cv::Vec4d& distortion_coeffs,
+                                const double& inlier_error,
+                                const double& success_probability,
+                                vector<int>& inlier_markers) 
+{
+
+    // Check the size of input point size.
+    if (pts1.size() != pts2.size())
+        printf("Sets of different size (%lu and %lu) are used...", pts1.size(), pts2.size());
+
+    double norm_pixel_unit = 2.0 / (intrinsics[0]+intrinsics[1]);
+    int iter_num = static_cast<int>(ceil(log(1-success_probability) / log(1-0.7*0.7)));
+
+    // Initially, mark all points as inliers.
+    inlier_markers.clear();
+    inlier_markers.resize(pts1.size(), 1);
+
+    // Undistort all the points.
+    vector<Point2f> pts1_undistorted(pts1.size());
+    vector<Point2f> pts2_undistorted(pts2.size());
+    undistortPoints(
+        pts1, intrinsics, distortion_model,
+        distortion_coeffs, pts1_undistorted);
+    undistortPoints(
+        pts2, intrinsics, distortion_model,
+        distortion_coeffs, pts2_undistorted);
+
+    // Compenstate the points in the previous image with
+    // the relative rotation.
+    for (auto& pt : pts1_undistorted) 
+    {
+        Vec3f pt_h(pt.x, pt.y, 1.0f);
+        //Vec3f pt_hc = dR * pt_h;
+        Vec3f pt_hc = R_p_c * pt_h;
+        pt.x = pt_hc[0];
+        pt.y = pt_hc[1];
+    }
+
+    // Normalize the points to gain numerical stability.
+    float scaling_factor = 0.0f;
+    rescalePoints(pts1_undistorted, pts2_undistorted, scaling_factor);
+    norm_pixel_unit *= scaling_factor;
+
+    // Compute the difference between previous and current points,
+    // which will be used frequently later.
+    vector<Point2d> pts_diff(pts1_undistorted.size());
+    for (int i = 0; i < pts1_undistorted.size(); ++i)
+        pts_diff[i] = pts1_undistorted[i] - pts2_undistorted[i];
+
+    // Mark the point pairs with large difference directly.
+    // BTW, the mean distance of the rest of the point pairs
+    // are computed.
+    double mean_pt_distance = 0.0;
+    int raw_inlier_cntr = 0;
+    for (int i = 0; i < pts_diff.size(); ++i) 
+    {
+        double distance = sqrt(pts_diff[i].dot(pts_diff[i]));
+        // 25 pixel distance is a pretty large tolerance for normal motion.
+        // However, to be used with aggressive motion, this tolerance should
+        // be increased significantly to match the usage.
+        if (distance > 50.0*norm_pixel_unit) 
+        {
+            inlier_markers[i] = 0;
+        } 
+        else 
+        {
+            mean_pt_distance += distance;
+            ++raw_inlier_cntr;
+        }
+    }
+    mean_pt_distance /= raw_inlier_cntr;
+
+    // If the current number of inliers is less than 3, just mark
+    // all input as outliers. This case can happen with fast
+    // rotation where very few features are tracked.
+    if (raw_inlier_cntr < 3) 
+    {
+        for (auto& marker : inlier_markers) marker = 0;
+        return;
+    }
+
+    // Before doing 2-point RANSAC, we have to check if the motion
+    // is degenerated, meaning that there is no translation between
+    // the frames, in which case, the model of the RANSAC does not
+    // work. If so, the distance between the matched points will
+    // be almost 0.
+    //if (mean_pt_distance < inlier_error*norm_pixel_unit) {
+    if (mean_pt_distance < norm_pixel_unit) 
+    {
+        //ROS_WARN_THROTTLE(1.0, "Degenerated motion...");
+        for (int i = 0; i < pts_diff.size(); ++i) 
+        {
+            if (inlier_markers[i] == 0) 
+                continue;
+            if (sqrt(pts_diff[i].dot(pts_diff[i])) > inlier_error*norm_pixel_unit)
+                inlier_markers[i] = 0;
+        }
+        return;
+    }
+
+    // In the case of general motion, the RANSAC model can be applied.
+    // The three column corresponds to tx, ty, and tz respectively.
+    MatrixXd coeff_t(pts_diff.size(), 3);
+    for (int i = 0; i < pts_diff.size(); ++i) 
+    {
+        coeff_t(i, 0) = pts_diff[i].y;
+        coeff_t(i, 1) = -pts_diff[i].x;
+        coeff_t(i, 2) = pts1_undistorted[i].x*pts2_undistorted[i].y - pts1_undistorted[i].y*pts2_undistorted[i].x;
+    }
+
+    vector<int> raw_inlier_idx;
+    for (int i = 0; i < inlier_markers.size(); ++i) 
+    {
+        if (inlier_markers[i] != 0)
+            raw_inlier_idx.push_back(i);
+    }
+
+    vector<int> best_inlier_set;
+    double best_error = 1e10;
+    random_numbers::RandomNumberGenerator random_gen;
+
+    for (int iter_idx = 0; iter_idx < iter_num; ++iter_idx) 
+    {
+        // Randomly select two point pairs.
+        // Although this is a weird way of selecting two pairs, but it
+        // is able to efficiently avoid selecting repetitive pairs.
+        int select_idx1 = random_gen.uniformInteger(0, raw_inlier_idx.size()-1);
+        int select_idx_diff = random_gen.uniformInteger(1, raw_inlier_idx.size()-1);
+        int select_idx2 = select_idx1+select_idx_diff<raw_inlier_idx.size() ? 
+                        select_idx1+select_idx_diff : select_idx1+select_idx_diff-raw_inlier_idx.size();
+
+        int pair_idx1 = raw_inlier_idx[select_idx1];
+        int pair_idx2 = raw_inlier_idx[select_idx2];
+
+        // Construct the model;
+        Vector2d coeff_tx(coeff_t(pair_idx1, 0), coeff_t(pair_idx2, 0));
+        Vector2d coeff_ty(coeff_t(pair_idx1, 1), coeff_t(pair_idx2, 1));
+        Vector2d coeff_tz(coeff_t(pair_idx1, 2), coeff_t(pair_idx2, 2));
+        vector<double> coeff_l1_norm(3);
+        coeff_l1_norm[0] = coeff_tx.lpNorm<1>();
+        coeff_l1_norm[1] = coeff_ty.lpNorm<1>();
+        coeff_l1_norm[2] = coeff_tz.lpNorm<1>();
+        int base_indicator = min_element(coeff_l1_norm.begin(), coeff_l1_norm.end())-coeff_l1_norm.begin();
+
+        Vector3d model(0.0, 0.0, 0.0);
+        if (base_indicator == 0) {
+            Matrix2d A;
+            A << coeff_ty, coeff_tz;
+            Vector2d solution = A.inverse() * (-coeff_tx);
+            model(0) = 1.0;
+            model(1) = solution(0);
+            model(2) = solution(1);
+        } 
+        else if (base_indicator ==1) 
+        {
+            Matrix2d A;
+            A << coeff_tx, coeff_tz;
+            Vector2d solution = A.inverse() * (-coeff_ty);
+            model(0) = solution(0);
+            model(1) = 1.0;
+            model(2) = solution(1);
+        } 
+        else 
+        {
+            Matrix2d A;
+            A << coeff_tx, coeff_ty;
+            Vector2d solution = A.inverse() * (-coeff_tz);
+            model(0) = solution(0);
+            model(1) = solution(1);
+            model(2) = 1.0;
+        }
+
+        // Find all the inliers among point pairs.
+        VectorXd error = coeff_t * model;
+
+        vector<int> inlier_set;
+        for (int i = 0; i < error.rows(); ++i) 
+        {
+            if (inlier_markers[i] == 0) continue;
+            if (std::abs(error(i)) < inlier_error*norm_pixel_unit)
+                inlier_set.push_back(i);
+        }
+
+        // If the number of inliers is small, the current
+        // model is probably wrong.
+        if (inlier_set.size() < 0.2*pts1_undistorted.size())
+            continue;
+
+        // Refit the model using all of the possible inliers.
+        VectorXd coeff_tx_better(inlier_set.size());
+        VectorXd coeff_ty_better(inlier_set.size());
+        VectorXd coeff_tz_better(inlier_set.size());
+        for (int i = 0; i < inlier_set.size(); ++i) 
+        {
+            coeff_tx_better(i) = coeff_t(inlier_set[i], 0);
+            coeff_ty_better(i) = coeff_t(inlier_set[i], 1);
+            coeff_tz_better(i) = coeff_t(inlier_set[i], 2);
+        }
+
+        Vector3d model_better(0.0, 0.0, 0.0);
+        if (base_indicator == 0) 
+        {
+            MatrixXd A(inlier_set.size(), 2);
+            A << coeff_ty_better, coeff_tz_better;
+            Vector2d solution = (A.transpose() * A).inverse() * A.transpose() * (-coeff_tx_better);
+            model_better(0) = 1.0;
+            model_better(1) = solution(0);
+            model_better(2) = solution(1);
+        } 
+        else if (base_indicator ==1) 
+        {
+            MatrixXd A(inlier_set.size(), 2);
+            A << coeff_tx_better, coeff_tz_better;
+            Vector2d solution = (A.transpose() * A).inverse() * A.transpose() * (-coeff_ty_better);
+            model_better(0) = solution(0);
+            model_better(1) = 1.0;
+            model_better(2) = solution(1);
+        } 
+        else 
+        {
+            MatrixXd A(inlier_set.size(), 2);
+            A << coeff_tx_better, coeff_ty_better;
+            Vector2d solution = (A.transpose() * A).inverse() * A.transpose() * (-coeff_tz_better);
+            model_better(0) = solution(0);
+            model_better(1) = solution(1);
+            model_better(2) = 1.0;
+        }
+
+        // Compute the error and upate the best model if possible.
+        VectorXd new_error = coeff_t * model_better;
+
+        double this_error = 0.0;
+        for (const auto& inlier_idx : inlier_set)
+            this_error += std::abs(new_error(inlier_idx));
+        this_error /= inlier_set.size();
+
+        if (inlier_set.size() > best_inlier_set.size()) {
+            best_error = this_error;
+            best_inlier_set = inlier_set;
+        }
+    }
+
+    // Fill in the markers.
+    inlier_markers.clear();
+    inlier_markers.resize(pts1.size(), 0);
+    for (const auto& inlier_idx : best_inlier_set)
+        inlier_markers[inlier_idx] = 1;
+
+    //printf("inlier ratio: %lu/%lu\n",
+    //    best_inlier_set.size(), inlier_markers.size());
+
+    return;
+}

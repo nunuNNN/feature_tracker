@@ -132,6 +132,23 @@ namespace feature_tracker {
                     camera_d_OPENCV.insert({cam.first, tempD});
                 }
 
+                for (auto const &cam : camera_extrinsics) {
+                    if (cam.first == 0)
+                    {
+                        cv::Matx33d R_imu_cam0(cam.second(cv::Rect(0,0,3,3)));
+                        cv::Vec3d   t_imu_cam0 = cam.second(cv::Rect(3,0,1,3));
+                        R_cam_imu.insert({cam.first, R_imu_cam0.t()});
+                        t_cam_imu.insert({cam.first, -R_imu_cam0.t() * t_imu_cam0});
+                    }
+                    else if (cam.first == 1)
+                    {
+                        cv::Matx33d R_imu_cam1(cam.second(cv::Rect(0,0,3,3)));
+                        cv::Vec3d   t_imu_cam1 = cam.second(cv::Rect(3,0,1,3));
+                        R_cam_imu.insert({cam.first, R_imu_cam1.t()});
+                        t_cam_imu.insert({cam.first, -R_imu_cam1.t() * t_imu_cam1});
+                    }
+                }
+
                 propagator->set_imu_cam_calib(camera_extrinsics);
 
                 return;
@@ -322,6 +339,9 @@ namespace feature_tracker {
 
         /// Camera distortion in OpenCV format
         std::map<size_t, cv::Vec4d> camera_d_OPENCV;
+
+        std::map<size_t, cv::Matx33d> R_cam_imu;
+        std::map<size_t, cv::Vec3d> t_cam_imu;
 
         /// Number of features we should try to track frame to frame
         int num_features;

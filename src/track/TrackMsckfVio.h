@@ -1,25 +1,5 @@
-/*
- * OpenVINS: An Open Platform for Visual-Inertial Research
- * Copyright (C) 2019 Patrick Geneva
- * Copyright (C) 2019 Kevin Eckenhoff
- * Copyright (C) 2019 Guoquan Huang
- * Copyright (C) 2019 OpenVINS Contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-#ifndef OV_CORE_TRACK_KLT_H
-#define OV_CORE_TRACK_KLT_H
+#ifndef TRACK_MSCKF_VIO_H
+#define TRACK_MSCKF_VIO_H
 
 
 #include "TrackBase.h"
@@ -44,7 +24,17 @@ namespace feature_tracker {
         /**
          * @brief Public default constructor
          */
-        TrackMsckfVio() : TrackBase(), threshold(10), grid_x(8), grid_y(5), min_px_dist(30) {}
+        TrackMsckfVio() : 
+            TrackBase(), 
+            threshold(10), 
+            grid_row(8), 
+            grid_col(5)，
+            prev_features_ptr(new GridFeatures()),
+            curr_features_ptr(new GridFeatures()) 
+        {
+            // Create feature detector.
+            detector_ptr = FastFeatureDetector::create(threshold);
+        }
 
         /**
          * @brief Public constructor with configuration variables
@@ -55,8 +45,16 @@ namespace feature_tracker {
          * @param gridy size of grid in the y-direction / v-direction
          * @param minpxdist features need to be at least this number pixels away from each other
          */
-        explicit TrackMsckfVio(int numfeats, int numaruco, int fast_threshold, int gridx, int gridy, int minpxdist) :
-                 TrackBase(numfeats, numaruco), threshold(fast_threshold), grid_x(gridx), grid_y(gridy), min_px_dist(minpxdist) {}
+        explicit TrackMsckfVio(int numfeats, int numaruco, int fast_threshold, int gridx, int gridy) :
+                 TrackBase(numfeats, numaruco),
+                 threshold(fast_threshold), 
+                 grid_row(gridx), 
+                 grid_col(gridy)
+                 prev_features_ptr(new GridFeatures()),
+                 curr_features_ptr(new GridFeatures()) 
+        {
+            detector_ptr = FastFeatureDetector::create(threshold);
+        }
 
 
         /**
@@ -69,62 +67,200 @@ namespace feature_tracker {
          */
         void feed_stereo(double timestamp, cv::Mat &img_left, cv::Mat &img_right, size_t cam_id_left, size_t cam_id_right) override;
 
+    private:
 
-    protected:
+        /*
+        * @brief FeatureIDType An alias for unsigned long long int.
+        */
+        typedef unsigned long long int FeatureIDType;
+
+        /*
+        * @brief FeatureMetaData Contains necessary information
+        *    of a feature for easy access.
+        */
+        struct FeatureMetaData {
+            FeatureIDType id;
+            float response;
+            int lifetime;
+            cv::Point2f cam0_point;
+            cv::Point2f cam1_point;
+        };
+
+        /*
+        * @brief GridFeatures Organize features based on the grid
+        *    they belong to. Note that the key is encoded by the
+        *    grid index.
+        */
+        typedef std::map<int, std::vector<FeatureMetaData> > GridFeatures;
+
+        /*
+        * @brief keyPointCompareByResponse
+        *    Compare two keypoints based on the response.
+        */
+        static bool keyPointCompareByResponse(const cv::KeyPoint& pt1,
+                                                const cv::KeyPoint& pt2) 
+        {
+            // Keypoint with higher response will be at the
+            // beginning of the vector.
+            return pt1.response > pt2.response;
+        }
+
+        /*
+        * @brief featureCompareByResponse
+        *    Compare two features based on the response.
+        */
+        static bool featureCompareByResponse(const FeatureMetaData& f1,
+                                                const FeatureMetaData& f2) 
+        {
+            // Features with higher response will be at the
+            // beginning of the vector.
+            return f1.response > f2.response;
+        }
+
+        /*
+        * @brief removeUnmarkedElements Remove the unmarked elements
+        *    within a vector.
+        * @param raw_vec: vector with outliers.
+        * @param markers: 0 will represent a outlier, 1 will be an inlier.
+        * @return refined_vec: a vector without outliers.
+        *
+        * Note that the order of the inliers in the raw_vec is perserved
+        * in the refined_vec.
+        */
+        template <typename T>
+        void removeUnmarkedElements(const std::vector<T>& raw_vec,
+                                    const std::vector<unsigned char>& markers,
+                                    std::vector<T>& refined_vec) 
+        {
+            if (raw_vec.size() != markers.size()) 
+            {
+                printf("The input size of raw_vec(%lu) and markers(%lu) does not match...",
+                    raw_vec.size(), markers.size());
+            }
+
+            for (int i = 0; i < markers.size(); ++i) 
+            {
+                if (markers[i] == 0) continue;
+                refined_vec.push_back(raw_vec[i]);
+            }
+
+            return;
+        }
+
+        void undistortPoints(const vector<cv::Point2f>& pts_in,
+                            cv::Matx33d K,
+                            const cv::Vec4d& distortion_coeffs,
+                            vector<cv::Point2f>& pts_out,
+                            const cv::Matx33d &rectification_matrix,
+                            const cv::Vec4d &new_intrinsics) 
+        {
+            if (pts_in.size() == 0) return;
+
+            const cv::Matx33d K_new(
+                new_intrinsics[0], 0.0, new_intrinsics[2],
+                0.0, new_intrinsics[1], new_intrinsics[3],
+                0.0, 0.0, 1.0);
+
+            cv::undistortPoints(pts_in, pts_out, K, distortion_coeffs,
+                                rectification_matrix, K_new);
+
+
+
+            return;
+        }
+
+        vector<cv::Point2f> ImageProcessor::distortPoints(
+            const vector<cv::Point2f>& pts_in,
+            const cv::Vec4d& intrinsics,
+            const string& distortion_model,
+            const cv::Vec4d& distortion_coeffs) {
+
+        const cv::Matx33d K(intrinsics[0], 0.0, intrinsics[2],
+                            0.0, intrinsics[1], intrinsics[3],
+                            0.0, 0.0, 1.0);
+
+        vector<cv::Point2f> pts_out;
+        if (distortion_model == "radtan") {
+            vector<cv::Point3f> homogenous_pts;
+            cv::convertPointsToHomogeneous(pts_in, homogenous_pts);
+            cv::projectPoints(homogenous_pts, cv::Vec3d::zeros(), cv::Vec3d::zeros(), K,
+                            distortion_coeffs, pts_out);
+        } else if (distortion_model == "equidistant") {
+            cv::fisheye::distortPoints(pts_in, pts_out, K, distortion_coeffs);
+        } else {
+            ROS_WARN_ONCE("The model %s is unrecognized, using radtan instead...",
+                        distortion_model.c_str());
+            vector<cv::Point3f> homogenous_pts;
+            cv::convertPointsToHomogeneous(pts_in, homogenous_pts);
+            cv::projectPoints(homogenous_pts, cv::Vec3d::zeros(), cv::Vec3d::zeros(), K,
+                            distortion_coeffs, pts_out);
+        }
+
+        return pts_out;
+        }
+
 
         void perform_detection_msckf_vio();
 
-        /**
-         * @brief Detects new features in the current stereo pair
-         * @param img0pyr left image we will detect features on (first level of pyramid)
-         * @param img1pyr right image we will detect features on (first level of pyramid)
-         * @param pts0 left vector of currently extracted keypoints
-         * @param pts1 right vector of currently extracted keypoints
-         * @param ids0 left vector of feature ids for each currently extracted keypoint
-         * @param ids1 right vector of feature ids for each currently extracted keypoint
-         *
-         * This does the same logic as the perform_detection_monocular() function, but we also enforce stereo contraints.
-         * So we detect features in the left image, and then KLT track them onto the right image.
-         * If we have valid tracks, then we have both the keypoint on the left and its matching point in the right image.
-         * Will try to always have the "max_features" being tracked through KLT at each timestep.
-         */
-        void perform_detection_stereo(const std::vector<cv::Mat> &img0pyr, const std::vector<cv::Mat> &img1pyr, std::vector<cv::KeyPoint> &pts0,
-                                      std::vector<cv::KeyPoint> &pts1, std::vector<size_t> &ids0, std::vector<size_t> &ids1);
+        void stereoMatch(const std::vector<cv::Mat>& img0pyr, 
+                        const std::vector<cv::Mat>& img1pyr，
+                        const vector<cv::Point2f>& cam0_points,
+                        vector<cv::Point2f>& cam1_points,
+                        vector<unsigned char>& inlier_markers);
 
-        /**
-         * @brief KLT track between two images, and do RANSAC afterwards
-         * @param img0pyr starting image pyramid
-         * @param img1pyr image pyramid we want to track too
-         * @param pts0 starting points
-         * @param pts1 points we have tracked
-         * @param id0 id of the first camera
-         * @param id1 id of the second camera
-         * @param mask_out what points had valid tracks
-         *
-         * This will track features from the first image into the second image.
-         * The two point vectors will be of equal size, but the mask_out variable will specify which points are good or bad.
-         * If the second vector is non-empty, it will be used as an initial guess of where the keypoints are in the second image.
-         */
-        void perform_matching(const std::vector<cv::Mat> &img0pyr, const std::vector<cv::Mat> &img1pyr, std::vector<cv::KeyPoint> &pts0,
-                              std::vector<cv::KeyPoint> &pts1, size_t id0, size_t id1, std::vector<uchar> &mask_out);
+        void trackFeatures();
+
+        void twoPointRansac(
+            const std::vector<cv::Point2f>& pts1,
+            const std::vector<cv::Point2f>& pts2,
+            const cv::Matx33f& R_p_c,
+            const cv::Vec4d& intrinsics,
+            const std::string& distortion_model,
+            const cv::Vec4d& distortion_coeffs,
+            const double& inlier_error,
+            const double& success_probability,
+            std::vector<int>& inlier_markers);
+
+    protected:
 
         // Timing variables
         boost::posix_time::ptime rT1, rT2, rT3, rT4, rT5, rT6, rT7;
 
+        // Number of features after each outlier removal step.
+        int before_tracking;
+        int after_tracking;
+        int after_matching;
+        int after_ransac;
+
         // Parameters for our FAST grid detector
         int threshold;
-        int grid_x;
-        int grid_y;
+        int grid_row;
+        int grid_col;
 
-        // Minimum pixel distance to be "far away enough" to be a different extracted feature
-        int min_px_dist;
+        int grid_min_feature_num = 2;
+        int grid_max_feature_num = 4;
+        int max_iteration = 30;
+        double track_precision = 0.01;
+        double ransac_threshold = 3;
+        double stereo_threshold = 3;
+        // Feature detector
+        cv::Ptr<cv::Feature2D> detector_ptr;
 
         // How many pyramid levels to track on and the window size to reduce by
         int pyr_levels = 3;
         cv::Size win_size = cv::Size(15, 15);
 
-        // Last set of image pyramids
-        std::map<size_t, std::vector<cv::Mat>> img_pyramid_last;
+        // ID for the next new feature.
+        FeatureIDType next_feature_id;
+
+        // Features in the previous and current image.
+        boost::shared_ptr<GridFeatures> prev_features_ptr;
+        boost::shared_ptr<GridFeatures> curr_features_ptr;
+
+        // Pyramids for previous and current image
+        std::vector<cv::Mat> prev_cam0_pyramid_;
+        std::vector<cv::Mat> curr_cam0_pyramid_;
+        std::vector<cv::Mat> curr_cam1_pyramid_;
 
     };
 
@@ -132,4 +268,4 @@ namespace feature_tracker {
 }
 
 
-#endif /* OV_CORE_TRACK_KLT_H */
+#endif /* TRACK_MSCKF_VIO_H */
