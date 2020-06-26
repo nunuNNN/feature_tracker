@@ -4,6 +4,11 @@
 
 #include "TrackBase.h"
 
+using namespace feature_tracker;
+using namespace std;
+using namespace cv;
+using namespace Eigen;
+
 
 namespace feature_tracker {
 
@@ -26,12 +31,13 @@ namespace feature_tracker {
          */
         TrackMsckfVio() : 
             TrackBase(), 
-            threshold(10), 
-            grid_row(8), 
-            grid_col(5)，
+            threshold(10),
+            grid_row(8),
+            grid_col(5),
             prev_features_ptr(new GridFeatures()),
             curr_features_ptr(new GridFeatures()) 
         {
+            is_first_img = true;
             // Create feature detector.
             detector_ptr = FastFeatureDetector::create(threshold);
         }
@@ -49,10 +55,12 @@ namespace feature_tracker {
                  TrackBase(numfeats, numaruco),
                  threshold(fast_threshold), 
                  grid_row(gridx), 
-                 grid_col(gridy)
+                 grid_col(gridy),
                  prev_features_ptr(new GridFeatures()),
                  curr_features_ptr(new GridFeatures()) 
         {
+            is_first_img = true;
+            // Create feature detector.
             detector_ptr = FastFeatureDetector::create(threshold);
         }
 
@@ -118,6 +126,19 @@ namespace feature_tracker {
         }
 
         /*
+        * @brief featureCompareByLifetime
+        *    Compare two features based on the lifetime.
+        */
+        static bool featureCompareByLifetime(
+            const FeatureMetaData& f1,
+            const FeatureMetaData& f2) 
+        {
+            // Features with longer lifetime will be at the
+            // beginning of the vector.
+            return f1.lifetime > f2.lifetime;
+        }
+
+        /*
         * @brief removeUnmarkedElements Remove the unmarked elements
         *    within a vector.
         * @param raw_vec: vector with outliers.
@@ -147,79 +168,30 @@ namespace feature_tracker {
             return;
         }
 
-        void undistortPoints(const vector<cv::Point2f>& pts_in,
-                            cv::Matx33d K,
-                            const cv::Vec4d& distortion_coeffs,
-                            vector<cv::Point2f>& pts_out,
-                            const cv::Matx33d &rectification_matrix,
-                            const cv::Vec4d &new_intrinsics) 
-        {
-            if (pts_in.size() == 0) return;
-
-            const cv::Matx33d K_new(
-                new_intrinsics[0], 0.0, new_intrinsics[2],
-                0.0, new_intrinsics[1], new_intrinsics[3],
-                0.0, 0.0, 1.0);
-
-            cv::undistortPoints(pts_in, pts_out, K, distortion_coeffs,
-                                rectification_matrix, K_new);
-
-
-
-            return;
-        }
-
-        vector<cv::Point2f> ImageProcessor::distortPoints(
-            const vector<cv::Point2f>& pts_in,
-            const cv::Vec4d& intrinsics,
-            const string& distortion_model,
-            const cv::Vec4d& distortion_coeffs) {
-
-        const cv::Matx33d K(intrinsics[0], 0.0, intrinsics[2],
-                            0.0, intrinsics[1], intrinsics[3],
-                            0.0, 0.0, 1.0);
-
-        vector<cv::Point2f> pts_out;
-        if (distortion_model == "radtan") {
-            vector<cv::Point3f> homogenous_pts;
-            cv::convertPointsToHomogeneous(pts_in, homogenous_pts);
-            cv::projectPoints(homogenous_pts, cv::Vec3d::zeros(), cv::Vec3d::zeros(), K,
-                            distortion_coeffs, pts_out);
-        } else if (distortion_model == "equidistant") {
-            cv::fisheye::distortPoints(pts_in, pts_out, K, distortion_coeffs);
-        } else {
-            ROS_WARN_ONCE("The model %s is unrecognized, using radtan instead...",
-                        distortion_model.c_str());
-            vector<cv::Point3f> homogenous_pts;
-            cv::convertPointsToHomogeneous(pts_in, homogenous_pts);
-            cv::projectPoints(homogenous_pts, cv::Vec3d::zeros(), cv::Vec3d::zeros(), K,
-                            distortion_coeffs, pts_out);
-        }
-
-        return pts_out;
-        }
-
-
-        void perform_detection_msckf_vio();
+        void perform_detection_msckf_vio(const std::vector<cv::Mat>& img0pyr, 
+                                        const std::vector<cv::Mat>& img1pyr);
 
         void stereoMatch(const std::vector<cv::Mat>& img0pyr, 
-                        const std::vector<cv::Mat>& img1pyr，
-                        const vector<cv::Point2f>& cam0_points,
-                        vector<cv::Point2f>& cam1_points,
+                        const std::vector<cv::Mat>& img1pyr, 
+                        const vector<cv::Point2f>& cam0_points, 
+                        vector<cv::Point2f>& cam1_points, 
                         vector<unsigned char>& inlier_markers);
 
-        void trackFeatures();
+        // void trackFeatures(const std::vector<cv::Mat>& img0pyr, 
+        //                 const std::vector<cv::Mat>& img1pyr,
+        //                 const std::vector<cv::Mat>& img0lastpyr, 
+        //                 const std::vector<cv::Mat>& img1lastpyr) ;
 
-        void twoPointRansac(
-            const std::vector<cv::Point2f>& pts1,
-            const std::vector<cv::Point2f>& pts2,
-            const cv::Matx33f& R_p_c,
-            const cv::Vec4d& intrinsics,
-            const std::string& distortion_model,
-            const cv::Vec4d& distortion_coeffs,
-            const double& inlier_error,
-            const double& success_probability,
-            std::vector<int>& inlier_markers);
+        // void twoPointRansac(
+        //     const std::vector<cv::Point2f>& pts1,
+        //     const std::vector<cv::Point2f>& pts2,
+        //     const cv::Matx33f& R_p_c,
+        //     const cv::Vec4d& intrinsics,
+        //     const std::string& distortion_model,
+        //     const cv::Vec4d& distortion_coeffs,
+        //     const double& inlier_error,
+        //     const double& success_probability,
+        //     std::vector<int>& inlier_markers);
 
     protected:
 
@@ -250,6 +222,9 @@ namespace feature_tracker {
         int pyr_levels = 3;
         cv::Size win_size = cv::Size(15, 15);
 
+        // Indicate if this is the first image message.
+        bool is_first_img;
+
         // ID for the next new feature.
         FeatureIDType next_feature_id;
 
@@ -259,6 +234,7 @@ namespace feature_tracker {
 
         // Pyramids for previous and current image
         std::vector<cv::Mat> prev_cam0_pyramid_;
+        std::vector<cv::Mat> prev_cam1_pyramid_;
         std::vector<cv::Mat> curr_cam0_pyramid_;
         std::vector<cv::Mat> curr_cam1_pyramid_;
 
