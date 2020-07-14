@@ -11,6 +11,8 @@
 #include "track/TrackKLT.h"
 #include "track/TrackDescriptor.h"
 
+#include "orbTrack/image_processor.h"
+
 using namespace std;
 using namespace Eigen;
 using namespace cv;
@@ -18,8 +20,8 @@ using namespace cv;
 using namespace feature_tracker;
 
 /// Our sparse feature tracker
-TrackBase* trackFEATS = nullptr;
-
+// TrackBase* trackFEATS = nullptr;
+std::shared_ptr<ImageProcessor> p_image_processor;
 
 string data_folder = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/";
 string param_folder = "../config/test.yaml";
@@ -145,13 +147,80 @@ void feed_measurement_imu()
             ss >> dStampUSec >> vAcc.x() >> vAcc.y() >> vAcc.z() >>
                 vGyr.x() >> vGyr.y() >> vGyr.z();
 
-            trackFEATS->feed_imu(dStampUSec * 1e-6, vAcc, vGyr);
+            // trackFEATS->feed_imu(dStampUSec * 1e-6, vAcc, vGyr);
+            p_image_processor->feed_measurement_imu(dStampUSec * 1e-6, vAcc, vGyr);
         }
     }
 }
 
 
-void feed_measurement_stereo()
+// void feed_measurement_stereo()
+// {
+//     string strFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/timestamp.txt";
+//     string filepath = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/";
+
+//     // Retrieve paths to images
+//     vector<string> vstr_left_image;
+//     vector<string> vstr_right_image;
+//     vector<double> vTimeStamp;
+
+//     ifstream f; f.open(strFile.c_str());
+//     if (!f.is_open())
+//     {
+//         cout << "Image path is not open! file: " << strFile << endl;
+//         return;
+//     }
+//     while (!f.eof())
+//     {
+//         string s;
+//         getline(f, s);
+//         if (!s.empty())
+//         {
+//             stringstream ss; ss << s; 
+//             int t; ss >> t;
+//             string left_image_file = "left/" + to_string(t) + ".jpg";
+//             string right_image_file = "right/" + to_string(t) + ".jpg";
+
+//             vTimeStamp.push_back(t * 1e3);
+//             vstr_left_image.push_back(left_image_file);
+//             vstr_right_image.push_back(right_image_file);
+//         }
+//     }
+//     cout << "Image size is: " << vstr_left_image.size() << endl;
+
+//     const int nImages = vstr_left_image.size();
+
+//     cv::Mat im_right, im_left;
+//     for (int ni = 0; ni < nImages; ni += 1)
+//     {
+//         if (vTimeStamp[ni] < 40e9 || vTimeStamp[ni] > 325e9)
+//         {
+//             continue;
+//         }
+
+//         im_left = cv::imread(filepath + vstr_left_image[ni], 0);
+//         im_right = cv::imread(filepath + vstr_right_image[ni], 0);
+
+//         if(im_left.empty() || im_right.empty())
+//         {
+//             cout << "Image is empty! " << filepath + "/" + vstr_left_image[ni] << endl;
+//             continue;
+//         }
+
+//         trackFEATS->feed_stereo((uint64_t)(vTimeStamp[ni]*1e-9), im_left, im_right, 0, 1);
+
+//         // Get our image of history tracks
+//         cv::Mat img_history;
+//         trackFEATS->display_active(img_history,255,255,0,255,255,255);
+//         imshow("img_history", img_history);
+//         cv::waitKey(1);
+
+//         // usleep(20000);
+//     }
+// }
+
+
+void feed_measurement_stereo_orb()
 {
     string strFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/timestamp.txt";
     string filepath = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/";
@@ -198,43 +267,40 @@ void feed_measurement_stereo()
         im_left = cv::imread(filepath + vstr_left_image[ni], 0);
         im_right = cv::imread(filepath + vstr_right_image[ni], 0);
 
+
         if(im_left.empty() || im_right.empty())
         {
             cout << "Image is empty! " << filepath + "/" + vstr_left_image[ni] << endl;
             continue;
         }
 
-        trackFEATS->feed_stereo((uint64_t)(vTimeStamp[ni]*1e-9), im_left, im_right, 0, 1);
+        // trackFEATS->feed_stereo((uint64_t)(vTimeStamp[ni]*1e-9), im_left, im_right, 0, 1);
+        p_image_processor->stereoCallback(vTimeStamp[ni]*1e-9, im_left, im_right);
 
-        // Get our image of history tracks
-        cv::Mat img_history;
-        trackFEATS->display_active(img_history,255,255,0,255,255,255);
-        imshow("img_history", img_history);
-        cv::waitKey(1);
-
-        // usleep(20000);
+        usleep(3000 * 1000);
     }
 }
-
 
 int main()
 {
     // 加载params
-    FeatureTrackerOptions params;
-    load_params(params);
+    // FeatureTrackerOptions params;
+    // load_params(params);
     // 打印参数信息
     // params.print_trackers();
     // params.print_state();
 
-    trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
+    // trackFEATS = new TrackKLT(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.min_px_dist);
     // trackFEATS = new TrackDescriptor(params.num_pts,0,params.fast_threshold,params.grid_x,params.grid_y,params.knn_ratio);
-    trackFEATS->set_calibration(params.camera_intrinsics, params.camera_extrinsics_mat);
+    // trackFEATS->set_calibration(params.camera_intrinsics, params.camera_extrinsics_mat);
+    p_image_processor.reset(new ImageProcessor());
 
 
     thread thd_pub_imu(feed_measurement_imu);
     thd_pub_imu.join();
 
-    feed_measurement_stereo();
+    // feed_measurement_stereo();
+    feed_measurement_stereo_orb();
 
     // while (true)
     {
