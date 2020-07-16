@@ -38,6 +38,7 @@ LIST(APPEND sourcefiles
     ${PROJECT_SOURCE_DIR}/../src/track/TrackMsckfVio.cpp 
     ${PROJECT_SOURCE_DIR}/../src/feat/Feature.cpp 
     ${PROJECT_SOURCE_DIR}/../src/orbTrack/image_processor.cpp
+    ${PROJECT_SOURCE_DIR}/../src/orbTrack/ORBextractor.cc
     )
 
 
