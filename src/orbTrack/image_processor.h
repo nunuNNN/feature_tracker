@@ -4,6 +4,13 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include<thread>
+#include <mutex>          // std::mutex
+#include <iostream>
+#include <algorithm>
+#include <set>
+#include <utility>
+#include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
 #include "orbTrack/ORBextractor.h"
 
@@ -122,6 +129,9 @@ private:
     //mutex imu
     std::mutex mutex_imu;
 
+    // ID for the next new feature.
+    FeatureIDType next_feature_id;
+
     // Indicate if this is the first image message.
     bool is_first_img;
 
@@ -158,7 +168,9 @@ private:
     // Corresponding stereo coordinate and depth for each keypoint.
     // "Monocular" keypoints have a negative value.
     std::vector<float> mvuRight;
+    std::vector<int> mvBestIdxR;
     std::vector<float> mvDepth;
+    std::vector<std::pair<int, int> > vDistIdx;
 
     // 匹配的门限值
     const int TH_HIGH = 100;
@@ -180,22 +192,22 @@ private:
 
 private:
     /*
-   * @brief drawFeaturesStereo
-   *    Draw tracked and newly detected features on the
-   *    stereo images.
-   */
+    * @brief drawFeaturesStereo
+    *    Draw tracked and newly detected features on the
+    *    stereo images.
+    */
     void drawFeaturesStereo();
 
-  /*
-   * @brief integrateImuData Integrates the IMU gyro readings
-   *    between the two consecutive images, which is used for
-   *    both tracking prediction and 2-point RANSAC.
-   * @return cam0_R_p_c: a rotation matrix which takes a vector
-   *    from previous cam0 frame to current cam0 frame.
-   * @return cam1_R_p_c: a rotation matrix which takes a vector
-   *    from previous cam1 frame to current cam1 frame.
-   */
-  void integrateImuData(cv::Matx33f& cam0_R_p_c, cv::Matx33f& cam1_R_p_c);
+    /*
+    * @brief integrateImuData Integrates the IMU gyro readings
+    *    between the two consecutive images, which is used for
+    *    both tracking prediction and 2-point RANSAC.
+    * @return cam0_R_p_c: a rotation matrix which takes a vector
+    *    from previous cam0 frame to current cam0 frame.
+    * @return cam1_R_p_c: a rotation matrix which takes a vector
+    *    from previous cam1 frame to current cam1 frame.
+    */
+    void integrateImuData(cv::Matx33f& cam0_R_p_c, cv::Matx33f& cam1_R_p_c);
 
     // ORBSLAM2 部分函数
     void ExtractORB(int flag, const cv::Mat &im);
@@ -207,6 +219,7 @@ private:
     // Computes the Hamming distance between two ORB descriptors
     static int DescriptorDistance(const cv::Mat &a, const cv::Mat &b);
 
+    void initializeFirstFrame();
 };
 
 typedef ImageProcessor::Ptr ImageProcessorPtr;

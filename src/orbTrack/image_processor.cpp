@@ -1,9 +1,3 @@
-#include <iostream>
-#include <algorithm>
-#include <set>
-#include<thread>
-#include <Eigen/Dense>
-
 #include "orbTrack/image_processor.h"
 
 using namespace std;
@@ -111,8 +105,8 @@ bool ImageProcessor::initialize()
 
 
     // Image Processor parameters
-    grid_row = 4;
-    grid_col = 5;
+    grid_row = 5;
+    grid_col = 4;
 
 
     printf("===========================================\n");
@@ -159,7 +153,7 @@ void ImageProcessor::stereoCallback(
     const Mat &cam1_img)
 {
     curr_cam_timestamp = timestamp;
-    // cout << "curr_cam_timestamp: " << fixed << curr_cam_timestamp << endl;
+    cout << "curr_cam_timestamp: " << fixed << curr_cam_timestamp << endl;
 
     curr_cam0_img = cam0_img.clone();
     curr_cam1_img = cam1_img.clone();
@@ -175,53 +169,12 @@ void ImageProcessor::stereoCallback(
     if(mvKeys.empty())
         return;
 
-    ComputeStereoMatches();
-
-    
-    
-    if(curr_left_size_fea > 100)
+    if (is_first_img)
     {
-        // Create MapPoints and asscoiate to KeyFrame
-        for(int i=0; i<curr_left_size_fea; i++)
-        {
-            float z = mvDepth[i];
-            if(z>0)
-            {
-                cv::Mat x3D = mCurrentFrame.UnprojectStereo(i);
-                MapPoint* pNewMP = new MapPoint(x3D,pKFini,mpMap);
-                pNewMP->AddObservation(pKFini,i);
-                pKFini->AddMapPoint(pNewMP,i);
-                pNewMP->ComputeDistinctiveDescriptors();
-                pNewMP->UpdateNormalAndDepth();
-                mpMap->AddMapPoint(pNewMP);
-
-                mCurrentFrame.mvpMapPoints[i]=pNewMP;
-            }
-        }
-
-        cout << "New map created with " << mpMap->MapPointsInMap() << " points" << endl;
-
-        mpLocalMapper->InsertKeyFrame(pKFini);
-
-        mLastFrame = Frame(mCurrentFrame);
-        mnLastKeyFrameId=mCurrentFrame.mnId;
-        mpLastKeyFrame = pKFini;
-
-        mvpLocalKeyFrames.push_back(pKFini);
-        mvpLocalMapPoints=mpMap->GetAllMapPoints();
-        mpReferenceKF = pKFini;
-        mCurrentFrame.mpReferenceKF = pKFini;
-
-        mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
-
-        mpMap->mvpKeyFrameOrigins.push_back(pKFini);
-
-        mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
-
-        mState=OK;
+        initializeFirstFrame();
+        // is_first_img = fasle;
+        drawFeaturesStereo();
     }
-
-    drawFeaturesStereo();
 
     return;
 }
@@ -232,6 +185,67 @@ void ImageProcessor::ExtractORB(int flag, const cv::Mat &im)
         (*mpORBextractorLeft)(im,cv::Mat(),mvKeys,mDescriptors);
     else
         (*mpORBextractorRight)(im,cv::Mat(),mvKeysRight,mDescriptorsRight);
+}
+
+void ImageProcessor::initializeFirstFrame()
+{
+
+    // Size of each grid.
+    static int grid_height = curr_cam0_img.rows / grid_row;
+    static int grid_width = curr_cam0_img.cols / grid_col;
+
+    // ORBSLAM2 的立体匹配方法
+    ComputeStereoMatches();
+
+    // 先根据深度计算那些点成功匹配了,也可以根据左点的值,同时给出一个指标判断匹配的程度
+
+
+
+    // Group the features into grids
+    GridFeatures grid_new_features;
+    for (int code = 0; code < grid_row * grid_col; ++code)
+    {
+        grid_new_features[code] = vector<FeatureMetaData>(0);
+    }
+
+    for (int iL = 0; iL < curr_left_size_fea; ++iL)
+    {
+        // 左图点没有对应的右图匹配点或者没有计算出深度值
+        if (mvBestIdxR[iL] < 0 || mvuRight[iL] < 0)
+        {
+            continue;
+        }
+
+        const cv::Point2f &cam0_point = mvKeys[iL].pt;
+        const cv::Point2f &cam1_point = mvKeysRight[mvBestIdxR[iL]].pt;
+        const float &response = -1;
+
+        int row = static_cast<int>(cam0_point.y / grid_height);
+        int col = static_cast<int>(cam0_point.x / grid_width);
+        int code = row * grid_col + col;
+
+        FeatureMetaData new_feature;
+        new_feature.response = response;
+        new_feature.cam0_point = cam0_point;
+        new_feature.cam1_point = cam1_point;
+        grid_new_features[code].push_back(new_feature);
+    }
+
+    // Collect new features within each grid with high response.
+    for (int code = 0; code < grid_row * grid_col; ++code)
+    {
+        vector<FeatureMetaData> &features_this_grid = (*curr_features_ptr)[code];
+        vector<FeatureMetaData> &new_features_this_grid = grid_new_features[code];
+
+        for (int k = 0; k < 4 && k < new_features_this_grid.size(); ++k)
+        {
+            features_this_grid.push_back(new_features_this_grid[k]);
+            features_this_grid.back().id = next_feature_id++;
+            features_this_grid.back().lifetime = 1;
+        }
+    }
+
+    return;
 }
 
 void ImageProcessor::ComputeStereoMatches()
@@ -269,7 +283,6 @@ void ImageProcessor::ComputeStereoMatches()
     const float maxD = mbf/minZ;
 
     // For each left keypoint search a match in the right image
-    vector<pair<int, int> > vDistIdx;
     vDistIdx.reserve(curr_left_size_fea);
 
     for(int iL=0; iL<curr_left_size_fea; iL++)
@@ -282,13 +295,19 @@ void ImageProcessor::ComputeStereoMatches()
         const vector<size_t> &vCandidates = vRowIndices[vL];
 
         if(vCandidates.empty())
+        {
+            mvBestIdxR[iL] = -1;
             continue;
+        }
 
         const float minU = uL-maxD;
         const float maxU = uL-minD;
 
         if(maxU<0)
-            continue;
+        {
+            mvBestIdxR[iL] = -1;
+            continue;            
+        }
 
         int bestDist = TH_HIGH;
         size_t bestIdxR = 0;
@@ -317,7 +336,10 @@ void ImageProcessor::ComputeStereoMatches()
                     bestIdxR = iR;
                 }
             }
+
         }
+
+        mvBestIdxR[iL] = bestIdxR;
 
         // Subpixel match by correlation
         if(bestDist<thOrbDist)
@@ -392,6 +414,7 @@ void ImageProcessor::ComputeStereoMatches()
                 vDistIdx.push_back(pair<int,int>(bestDist,iL));
             }
         }
+
     }
 
     sort(vDistIdx.begin(),vDistIdx.end());

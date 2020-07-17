@@ -23,7 +23,7 @@ using namespace feature_tracker;
 // TrackBase* trackFEATS = nullptr;
 std::shared_ptr<ImageProcessor> p_image_processor;
 
-string data_folder = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/";
+// string data_folder = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/";
 string param_folder = "../config/test.yaml";
 
 void load_params(FeatureTrackerOptions &params)
@@ -120,7 +120,8 @@ void load_params(FeatureTrackerOptions &params)
 
 void feed_measurement_imu()
 {
-    string imuFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/imu.txt";
+    // string imuFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/imu.txt";
+    string imuFile = "/home/ld/projects/dataset/ap03/slow/imu.txt";
 
     std::ifstream f;
     f.open(imuFile.c_str());
@@ -222,8 +223,10 @@ void feed_measurement_imu()
 
 void feed_measurement_stereo_orb()
 {
-    string strFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/timestamp.txt";
-    string filepath = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/";
+    // string strFile = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/timestamp.txt";
+    // string filepath = "/Users/zhangjingwen/Downloads/liudong/pro/dataset/slow/";
+    string strFile = "/home/ld/projects/dataset/ap03/slow/forw/timestamp.txt";
+    string filepath = "/home/ld/projects/dataset/ap03/slow/forw/";
 
     // Retrieve paths to images
     vector<string> vstr_left_image;
