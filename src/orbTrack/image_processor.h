@@ -168,7 +168,7 @@ private:
     // Corresponding stereo coordinate and depth for each keypoint.
     // "Monocular" keypoints have a negative value.
     std::vector<float> mvuRight;
-    std::vector<int> mvBestIdxR;
+    std::vector<size_t> mvBestIdxR;
     std::vector<float> mvDepth;
     std::vector<std::pair<int, int> > vDistIdx;
 

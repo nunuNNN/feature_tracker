@@ -280,7 +280,7 @@ void feed_measurement_stereo_orb()
         // trackFEATS->feed_stereo((uint64_t)(vTimeStamp[ni]*1e-9), im_left, im_right, 0, 1);
         p_image_processor->stereoCallback(vTimeStamp[ni]*1e-9, im_left, im_right);
 
-        usleep(30000 * 1000);
+        usleep(300 * 1000);
     }
 }
 

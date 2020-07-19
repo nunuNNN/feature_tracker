@@ -14,9 +14,9 @@ ImageProcessor::ImageProcessor()
 {
     initialize();
 
-    int nFeatures = 200;
+    int nFeatures = 1200;
     float fScaleFactor = 1.2;
-    int nLevels = 3;
+    int nLevels = 8;
     int fIniThFAST = 20;
     int fMinThFAST = 7;
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
@@ -176,6 +176,15 @@ void ImageProcessor::stereoCallback(
         drawFeaturesStereo();
     }
 
+
+  prev_features_ptr = curr_features_ptr;
+  // Initialize the current features to empty vectors.
+  curr_features_ptr.reset(new GridFeatures());
+  for (int code = 0; code < grid_row*grid_col; ++code) {
+    (*curr_features_ptr)[code] = vector<FeatureMetaData>(0);
+  }
+
+
     return;
 }
 
@@ -262,6 +271,8 @@ void ImageProcessor::ComputeStereoMatches()
 
     for(int i=0; i<nRows; i++)
         vRowIndices[i].reserve(200);
+
+    mvBestIdxR.reserve(curr_left_size_fea);
 
     const int Nr = mvKeysRight.size();
 
