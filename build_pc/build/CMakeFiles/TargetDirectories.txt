@@ -1,3 +1,0 @@
-/home/ld/feature_tracker/build_pc/build/CMakeFiles/edit_cache.dir
-/home/ld/feature_tracker/build_pc/build/CMakeFiles/rebuild_cache.dir
-/home/ld/feature_tracker/build_pc/build/CMakeFiles/test_tracking.dir
